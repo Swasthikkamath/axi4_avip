@@ -21,11 +21,11 @@ class axi4_virtual_base_seq extends uvm_sequence;
   awburst_e writeBurstType;
   
 
-  awsize_e readTranSize;
+  arsize_e readTranSize;
 
   transfer_type_e readTransferType;
   
-  awburst_e readBurstType;
+  arburst_e readBurstType;
   
 
 

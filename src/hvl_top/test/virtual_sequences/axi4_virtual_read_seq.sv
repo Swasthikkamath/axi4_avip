@@ -37,9 +37,9 @@ endfunction : new
 task axi4_virtual_read_seq::body();
   axi4_master_read_seq_h = axi4_master_base_seq::type_id::create("axi4_master_read_seq_h");
 
-  axi4_master_read_seq_h.tranSize = readTranSize;
-  axi4_master_read_seq_h.transferType = readTransferType;
-  axi4_master_read_seq_h.burstType = readBurstType;
+  axi4_master_read_seq_h.readTranSize = readTranSize;
+  axi4_master_read_seq_h.readTransferType = readTransferType;
+  axi4_master_read_seq_h.readBurstType = readBurstType;
   axi4_master_read_seq_h.writeOrRead  = READ;
   `uvm_info(get_type_name(), $sformatf("Starting READ virtual sequence | size=%s burst=%s type=%s",
             readTranSize.name(), readBurstType.name(), readTransferType.name()), UVM_LOW)

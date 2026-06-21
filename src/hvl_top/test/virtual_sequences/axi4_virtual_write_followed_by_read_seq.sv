@@ -47,14 +47,14 @@ task axi4_virtual_write_followed_by_read_seq::body();
   axi4_master_write_seq_h  = axi4_master_base_seq::type_id::create("axi4_master_bk_write_seq_h");
   axi4_master_read_seq_h   = axi4_master_base_seq::type_id::create("axi4_slave_bk_read_seq_h");
 
-  axi4_master_write_seq_h.tranSize = writeTranSize;
-  axi4_master_write_seq_h.transferType = writeTransferType;
-  axi4_master_write_seq_h.burstType = writeBurstType;
+  axi4_master_write_seq_h.writeTranSize = writeTranSize;
+  axi4_master_write_seq_h.writeTransferType = writeTransferType;
+  axi4_master_write_seq_h.writeBurstType = writeBurstType;
   axi4_master_write_seq_h.writeOrRead  = WRITE; 
  
-  axi4_master_read_seq_h.tranSize = readTranSize;
-  axi4_master_read_seq_h.transferType = readTransferType;
-  axi4_master_read_seq_h.burstType = readBurstType;
+  axi4_master_read_seq_h.readTranSize = readTranSize;
+  axi4_master_read_seq_h.readTransferType = readTransferType;
+  axi4_master_read_seq_h.readBurstType = readBurstType;
   axi4_master_read_seq_h.writeOrRead  = READ; 
 
    begin 

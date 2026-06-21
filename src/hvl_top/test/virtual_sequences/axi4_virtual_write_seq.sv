@@ -37,9 +37,9 @@ endfunction : new
 task axi4_virtual_write_seq::body();
   axi4_master_write_seq_h = axi4_master_base_seq::type_id::create("axi4_master_write_seq_h");
 
-  axi4_master_write_seq_h.tranSize = writeTranSize;
-  axi4_master_write_seq_h.transferType = writeTransferType;
-  axi4_master_write_seq_h.burstType = writeBurstType;
+  axi4_master_write_seq_h.writeTranSize = writeTranSize;
+  axi4_master_write_seq_h.writeTransferType = writeTransferType;
+  axi4_master_write_seq_h.writeBurstType = writeBurstType;
   axi4_master_write_seq_h.writeOrRead  = WRITE;
   `uvm_info(get_type_name(), $sformatf("Starting WRITE virtual sequence | size=%s burst=%s type=%s",
             writeTranSize.name(), writeBurstType.name(), writeTransferType.name()), UVM_LOW)

@@ -235,19 +235,11 @@ data_write_packet.awqos = axiSlaveCb.awqos;
     @(axiSlaveCb);
 
     
-    if((struct_cfg.qos_mode_type == ONLY_WRITE_QOS_MODE_ENABLE) || (struct_cfg.qos_mode_type == WRITE_READ_QOS_MODE_ENABLE)) begin
-      axiSlaveCb.bid <= data_write_packet.bid; 
-      axiSlaveCb.bresp <= data_write_packet.bresp;
-      axiSlaveCb.buser <= data_write_packet.buser;
-      axiSlaveCb.bvalid <= 1;
-    end
-    else begin 
       axiSlaveCb.bid <= bid_local;
       data_write_packet.bid <= bid_local;
       axiSlaveCb.bresp <= data_write_packet.bresp;
       axiSlaveCb.buser <= data_write_packet.buser;
       axiSlaveCb.bvalid <= 1;
-    end 
     
     @(axiSlaveCb);
     while(axiSlaveCb.bready === 0) begin

@@ -10,13 +10,23 @@ class axi4_master_base_seq extends uvm_sequence #(axi4_master_tx);
   //factory registration
   `uvm_object_utils(axi4_master_base_seq)
   
-  awsize_e tranSize;
+  awsize_e writeTranSize;
 
-  transfer_type_e transferType;
+  transfer_type_e writeTransferType;
   
-  awburst_e burstType;
+  awburst_e writeBurstType;
   
   tx_type_e writeOrRead;
+
+   arsize_e readTranSize;
+
+  transfer_type_e readTransferType;
+  
+  arburst_e readBurstType;
+  
+
+
+
   //-------------------------------------------------------
   // Externally defined Function
   //-------------------------------------------------------
@@ -40,18 +50,31 @@ endfunction : new
 // based on the request from driver task will drive the transactions
 task axi4_master_base_seq::body();
   super.body();
-  `uvm_info(get_type_name(), $sformatf("Generating %s transaction | size=%s burst=%s type=%s",
-            writeOrRead.name(), tranSize.name(), burstType.name(), transferType.name()), UVM_LOW)
 
   req = axi4_master_tx::type_id::create("req");
 
   start_item(req);
-  if(!req.randomize() with {req.awsize == tranSize;
+  if(writeOrRead == WRITE) begin
+    `uvm_info(get_type_name(), $sformatf("Generating WRITE transaction | size=%s burst=%s type=%s",
+              writeTranSize.name(), writeBurstType.name(), writeTransferType.name()), UVM_LOW)
+    if(!req.randomize() with {req.awsize == writeTranSize;
                               req.tx_type == writeOrRead;
-                              req.transfer_type == transferType;
-                              req.awburst == burstType;}) begin
-    `uvm_fatal(get_type_name(), $sformatf("Randomization failed for axi4_master_tx (size=%s burst=%s type=%s)",
-               tranSize.name(), burstType.name(), transferType.name()))
+                              req.transfer_type == writeTransferType;
+                              req.awburst == writeBurstType;}) begin
+      `uvm_fatal(get_type_name(), $sformatf("Randomization failed for WRITE axi4_master_tx (size=%s burst=%s type=%s)",
+                 writeTranSize.name(), writeBurstType.name(), writeTransferType.name()))
+    end
+  end
+  else begin
+    `uvm_info(get_type_name(), $sformatf("Generating READ transaction | size=%s burst=%s type=%s",
+              readTranSize.name(), readBurstType.name(), readTransferType.name()), UVM_LOW)
+    if(!req.randomize() with {req.arsize == readTranSize;
+                              req.tx_type == writeOrRead;
+                              req.transfer_type == readTransferType;
+                              req.arburst == readBurstType;}) begin
+      `uvm_fatal(get_type_name(), $sformatf("Randomization failed for READ axi4_master_tx (size=%s burst=%s type=%s)",
+                 readTranSize.name(), readBurstType.name(), readTransferType.name()))
+    end
   end
 
   `uvm_info(get_type_name(), $sformatf("Randomized transaction:\n%s", req.sprint()), UVM_HIGH)
