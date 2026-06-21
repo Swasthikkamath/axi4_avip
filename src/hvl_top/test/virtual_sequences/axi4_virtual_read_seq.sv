@@ -40,7 +40,7 @@ task axi4_virtual_read_seq::body();
   axi4_master_read_seq_h.tranSize = readTranSize;
   axi4_master_read_seq_h.transferType = readTransferType;
   axi4_master_read_seq_h.burstType = readBurstType;
-  axi4_master_read_seq_h.readOrRead  = READ; 
+  axi4_master_read_seq_h.writeOrRead  = READ;
   `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: Insdie axi4_virtual_read_seq"), UVM_NONE); 
   fork 
     begin: T1_WRITE

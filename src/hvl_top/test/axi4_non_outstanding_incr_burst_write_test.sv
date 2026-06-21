@@ -8,7 +8,7 @@
 class axi4_non_outstanding_incr_burst_write_test extends axi4_base_test;
   `uvm_component_utils(axi4_non_outstanding_incr_burst_write_test)
 
-  //Variable : axi4_virtual_write_seq_h
+  //Variable : axi4_virtual_bk_32b_write_data_seq_h
   //Instatiation of axi4_virtual_write_seq
   axi4_virtual_write_seq axi4_virtual_bk_32b_write_data_seq_h;
   
@@ -53,9 +53,9 @@ task axi4_non_outstanding_incr_burst_write_test::run_phase(uvm_phase phase);
 
   axi4_virtual_bk_32b_write_data_seq_h=axi4_virtual_write_seq::type_id::create("axi4_virtual_bk_32b_write_data_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_non_outstanding_incr_burst_write_test"),UVM_LOW);
-  axi4_virtual_bk_32b_data_write_seq_h.writeTransize = WRITE_32_BYTES;
-  axi4_virtual_bk_32b_data_write_seq_h.writeTransferType = NON_OUTSTANDING_WRITE;
-  axi4_virtual_bk_32b_data_write_seq_h.writeBurstType = WRITE_INCR;
+  axi4_virtual_bk_32b_write_data_seq_h.writeTranSize = WRITE_32_BYTES;
+  axi4_virtual_bk_32b_write_data_seq_h.writeTransferType = NON_OUTSTANDING_WRITE;
+  axi4_virtual_bk_32b_write_data_seq_h.writeBurstType = WRITE_INCR;
   phase.raise_objection(this);
   axi4_virtual_bk_32b_write_data_seq_h.start(axi4_env_h.axi4_virtual_seqr_h);
   phase.drop_objection(this);

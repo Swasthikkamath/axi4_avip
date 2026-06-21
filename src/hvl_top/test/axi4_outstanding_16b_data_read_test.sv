@@ -8,7 +8,7 @@
 class axi4_outstanding_16b_data_read_test extends axi4_base_test;
   `uvm_component_utils(axi4_outstanding_16b_data_read_test)
 
-  //Variable : axi4_virtual_write_seq_h
+  //Variable : axi4_virtual_nbk_16b_data_read_seq_h
   //Instatiation of axi4_virtual_write_seq
   axi4_virtual_read_seq axi4_virtual_nbk_16b_data_read_seq_h;
   
@@ -50,7 +50,7 @@ task axi4_outstanding_16b_data_read_test::run_phase(uvm_phase phase);
 
   axi4_virtual_nbk_16b_data_read_seq_h=axi4_virtual_read_seq::type_id::create("axi4_virtual_nbk_16b_data_read_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_outstanding_16b_data_read_test"),UVM_LOW);
-  axi4_virtual_nbk_16b_data_read_seq_h.readTransize = READ_16_BYTES;
+  axi4_virtual_nbk_16b_data_read_seq_h.readTranSize = READ_16_BYTES;
   axi4_virtual_nbk_16b_data_read_seq_h.readTransferType = OUTSTANDING_READ;
   axi4_virtual_nbk_16b_data_read_seq_h.readBurstType = READ_INCR;
 

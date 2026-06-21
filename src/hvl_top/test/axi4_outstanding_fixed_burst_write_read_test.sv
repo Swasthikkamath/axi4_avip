@@ -43,13 +43,13 @@ task axi4_outstanding_fixed_burst_write_read_test::run_phase(uvm_phase phase);
 
   axi4_virtual_nbk_32b_write_read_seq_h=axi4_virtual_write_read_seq::type_id::create("axi4_virtual_nbk_32b_write_read_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_outstanding_fixed_burst_write_read_test"),UVM_LOW);
-  axi4_virtual_nbk_32b_data_write_read_seq_h.writeTransize = WRITE_32_BYTES;
-  axi4_virtual_nbk_32b_data_write_read_seq_h.writeTransferType = OUTSTANDING_WRITE;
-  axi4_virtual_nbk_32b_data_write_read_seq_h.writeBurstType = WRITE_FIXED;
+  axi4_virtual_nbk_32b_write_read_seq_h.writeTranSize = WRITE_32_BYTES;
+  axi4_virtual_nbk_32b_write_read_seq_h.writeTransferType = OUTSTANDING_WRITE;
+  axi4_virtual_nbk_32b_write_read_seq_h.writeBurstType = WRITE_FIXED;
 
-  axi4_virtual_nbk_32b_data_write_read_seq_h.readTransize = READ_32_BYTES;
-  axi4_virtual_nbk_32b_data_write_read_seq_h.readTransferType = OUTSTANDING_READ;
-  axi4_virtual_nbk_32b_data_write_read_seq_h.readBurstType = READ_FIXED;
+  axi4_virtual_nbk_32b_write_read_seq_h.readTranSize = READ_32_BYTES;
+  axi4_virtual_nbk_32b_write_read_seq_h.readTransferType = OUTSTANDING_READ;
+  axi4_virtual_nbk_32b_write_read_seq_h.readBurstType = READ_FIXED;
 
   phase.raise_objection(this);
   axi4_virtual_nbk_32b_write_read_seq_h.start(axi4_env_h.axi4_virtual_seqr_h);

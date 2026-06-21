@@ -118,7 +118,7 @@ endif
 
 
 simulate:
-	mkdir $(test_folder)
+	mkdir -p $(test_folder)
 	xrun -R \
 	-64 \
 	-sv \

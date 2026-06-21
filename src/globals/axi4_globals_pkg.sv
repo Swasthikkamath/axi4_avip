@@ -30,9 +30,8 @@ package axi4_globals_pkg;
   //Used to set the address width to the address bus
   parameter int ADDRESS_WIDTH = 32;
 
-  `define DATA_WIDTH 32
   //Parameter: DATA_WIDTH
-  //Used to set the data width 
+  //Used to set the data width
   parameter int DATA_WIDTH = 64;
 
   //Parameter: SLAVE_MEMORY_SIZE

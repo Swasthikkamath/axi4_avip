@@ -297,14 +297,24 @@
             // write response_task
             axi4_slave_drv_bfm_h.axi4_write_response_phase(struct_write_packet,struct_cfg,bid_local);
           end 
-          else begin 
+          else begin
             local_slave_addr_tx = axiSlaveAddressQueue.pop_front();
             local_slave_data_tx = axiSlaveDataQueue.pop_front();
             bid_local = local_slave_addr_tx.awid;
+            if(local_slave_addr_tx.awburst == WRITE_FIXED) begin
+              end_wrap_addr =  local_slave_addr_tx.awaddr + ((2**local_slave_addr_tx.awsize));
+            end
+            if(local_slave_addr_tx.awburst == WRITE_INCR) begin
+              end_wrap_addr =  local_slave_addr_tx.awaddr + ((local_slave_addr_tx.awlen+1)*(2**local_slave_addr_tx.awsize));
+            end
+            if(local_slave_addr_tx.awburst == WRITE_WRAP) begin
+              end_wrap_addr = local_slave_addr_tx.awaddr - int'(local_slave_addr_tx.awaddr%((local_slave_addr_tx.awlen+1)*(2**local_slave_addr_tx.awsize)));
+              start_wrap_addr = end_wrap_addr + ((local_slave_addr_tx.awlen+1)*(2**local_slave_addr_tx.awsize));
+            end
             if(!((local_slave_addr_tx.awaddr inside {[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]}) && (end_wrap_addr inside{[axi4_slave_agent_cfg_h.min_address : axi4_slave_agent_cfg_h.max_address]}) && (start_wrap_addr inside{[axi4_slave_agent_cfg_h.min_address : axi4_slave_agent_cfg_h.max_address]}))) begin
               struct_write_packet.bresp = WRITE_SLVERR;
 
-            end 
+            end
             axi4_slave_drv_bfm_h.axi4_write_response_phase(struct_write_packet,struct_cfg,bid_local);
           end 
 
@@ -595,7 +605,7 @@
           else begin 
             struct_read_packet.rresp[0] = READ_SLVERR;
             `uvm_info("SLAVE DRIVER PROXY",$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",addr),UVM_HIGH)
-            struct_read_packet.rdata[0][k*k+7 -:8] = '0;
+            struct_read_packet.rdata[0][8*k+7 -:8] = '0;
             addr++;
           end 
         end

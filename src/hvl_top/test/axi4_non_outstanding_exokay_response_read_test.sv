@@ -8,7 +8,7 @@
 class axi4_non_outstanding_exokay_response_read_test extends axi4_base_test;
   `uvm_component_utils(axi4_non_outstanding_exokay_response_read_test)
 
-  //Variable : axi4_virtual_write_seq_h
+  //Variable : axi4_virtual_bk_exokay_response_read_seq_h
   //Instatiation of axi4_virtual_write_seq
   axi4_virtual_bk_exokay_response_read_seq axi4_virtual_bk_exokay_response_read_seq_h;
   

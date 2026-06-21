@@ -131,7 +131,7 @@ override test_folder = $(test)
 endif
 
 simulate:
-	mkdir $(test_folder)
+	mkdir -p $(test_folder)
 
 	# Use -novopt for no optimization - Makes the simulation slower
 	# vsim -pli finesim.so -coverage top
