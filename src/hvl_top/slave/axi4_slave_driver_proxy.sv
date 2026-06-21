@@ -323,8 +323,6 @@
             axi4_slave_drv_bfm_h.axi4_write_response_phase(struct_write_packet,struct_cfg,bid_local);
           end 
 
-          `uvm_info(get_type_name(), $sformatf("B response driven | bid=%0d bresp=%s",
-                    bid_local, bresp_e'(struct_write_packet.bresp).name()), UVM_MEDIUM)
 
           //Converting struct into transaction data type
           axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_response_tx);
