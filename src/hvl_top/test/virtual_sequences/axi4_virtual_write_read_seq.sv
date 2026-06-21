@@ -52,9 +52,10 @@ task axi4_virtual_write_read_seq::body();
   axi4_master_read_seq_h.writeOrRead  = READ; 
 
 
-  `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: Insdie axi4_virtual_write_read_seq"), UVM_NONE); 
+  `uvm_info(get_type_name(), $sformatf("Starting WRITE+READ virtual sequence | wr_size=%s rd_size=%s wr_burst=%s rd_burst=%s type=%s",
+            writeTranSize.name(), readTranSize.name(), writeBurstType.name(), readBurstType.name(), writeTransferType.name()), UVM_LOW)
 
-  fork 
+  fork
     begin: T1_BK_WRITE
       repeat(2) begin
         axi4_master_write_seq_h.start(p_sequencer.axi4_master_write_seqr_h);

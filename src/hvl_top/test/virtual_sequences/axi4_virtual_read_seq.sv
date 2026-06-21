@@ -41,9 +41,10 @@ task axi4_virtual_read_seq::body();
   axi4_master_read_seq_h.transferType = readTransferType;
   axi4_master_read_seq_h.burstType = readBurstType;
   axi4_master_read_seq_h.writeOrRead  = READ;
-  `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: Insdie axi4_virtual_read_seq"), UVM_NONE); 
-  fork 
-    begin: T1_WRITE
+  `uvm_info(get_type_name(), $sformatf("Starting READ virtual sequence | size=%s burst=%s type=%s",
+            readTranSize.name(), readBurstType.name(), readTransferType.name()), UVM_LOW)
+  fork
+    begin: T1_READ
       repeat(5) begin
         axi4_master_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
       end

@@ -53,7 +53,7 @@ task axi4_outstanding_64b_write_data_test::run_phase(uvm_phase phase);
 
   axi4_virtual_nbk_64b_write_data_seq_h=axi4_virtual_write_seq::type_id::create("axi4_virtual_nbk_64b_write_data_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_outstanding_64b_write_data_test"),UVM_LOW);
-  axi4_virtual_nbk_64b_write_data_seq_h.writeTranSize = WRITE_64_BYTES;
+  axi4_virtual_nbk_64b_write_data_seq_h.writeTranSize = WRITE_8_BYTES;
   axi4_virtual_nbk_64b_write_data_seq_h.writeTransferType = OUTSTANDING_WRITE;
   axi4_virtual_nbk_64b_write_data_seq_h.writeBurstType = WRITE_INCR;
   phase.raise_objection(this);

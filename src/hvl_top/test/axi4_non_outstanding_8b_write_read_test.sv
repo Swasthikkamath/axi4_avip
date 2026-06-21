@@ -43,11 +43,11 @@ task axi4_non_outstanding_8b_write_read_test::run_phase(uvm_phase phase);
 
   axi4_virtual_bk_8b_write_read_seq_h=axi4_virtual_write_read_seq::type_id::create("axi4_virtual_bk_8b_write_read_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_non_outstanding_8b_write_read_test"),UVM_LOW);
-  axi4_virtual_bk_8b_write_read_seq_h.writeTranSize = WRITE_8_BYTES;
+  axi4_virtual_bk_8b_write_read_seq_h.writeTranSize = WRITE_1_BYTE;
   axi4_virtual_bk_8b_write_read_seq_h.writeTransferType = NON_OUTSTANDING_WRITE;
   axi4_virtual_bk_8b_write_read_seq_h.writeBurstType = WRITE_INCR;
 
-  axi4_virtual_bk_8b_write_read_seq_h.readTranSize = READ_8_BYTES;
+  axi4_virtual_bk_8b_write_read_seq_h.readTranSize = READ_1_BYTE;
   axi4_virtual_bk_8b_write_read_seq_h.readTransferType = NON_OUTSTANDING_READ;
   axi4_virtual_bk_8b_write_read_seq_h.readBurstType = READ_INCR;
 

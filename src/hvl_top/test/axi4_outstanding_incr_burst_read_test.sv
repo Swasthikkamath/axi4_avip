@@ -52,7 +52,7 @@ task axi4_outstanding_incr_burst_read_test::run_phase(uvm_phase phase);
 
   axi4_virtual_nbk_32b_read_data_seq_h=axi4_virtual_read_seq::type_id::create("axi4_virtual_nbk_32b_read_data_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_outstanding_incr_burst_read_test"),UVM_LOW);
-  axi4_virtual_nbk_32b_read_data_seq_h.readTranSize = READ_32_BYTES;
+  axi4_virtual_nbk_32b_read_data_seq_h.readTranSize = READ_4_BYTES;
   axi4_virtual_nbk_32b_read_data_seq_h.readTransferType = OUTSTANDING_READ;
   axi4_virtual_nbk_32b_read_data_seq_h.readBurstType = READ_INCR;
   phase.raise_objection(this);

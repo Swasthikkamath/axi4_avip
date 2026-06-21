@@ -40,9 +40,10 @@ task axi4_virtual_write_seq::body();
   axi4_master_write_seq_h.tranSize = writeTranSize;
   axi4_master_write_seq_h.transferType = writeTransferType;
   axi4_master_write_seq_h.burstType = writeBurstType;
-  axi4_master_write_seq_h.writeOrRead  = WRITE; 
-  `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: Insdie axi4_virtual_write_seq"), UVM_NONE); 
-  fork 
+  axi4_master_write_seq_h.writeOrRead  = WRITE;
+  `uvm_info(get_type_name(), $sformatf("Starting WRITE virtual sequence | size=%s burst=%s type=%s",
+            writeTranSize.name(), writeBurstType.name(), writeTransferType.name()), UVM_LOW)
+  fork
     begin: T1_WRITE
       repeat(5) begin
         axi4_master_write_seq_h.start(p_sequencer.axi4_master_write_seqr_h);

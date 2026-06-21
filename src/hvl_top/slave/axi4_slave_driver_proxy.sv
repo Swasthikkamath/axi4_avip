@@ -142,7 +142,7 @@
   function void axi4_slave_driver_proxy::build_phase(uvm_phase phase);
     super.build_phase(phase);
     if(!uvm_config_db #(virtual axi4_slave_driver_bfm)::get(this,"","axi4_slave_driver_bfm",axi4_slave_drv_bfm_h)) begin
-      `uvm_fatal("FATAL_MDP_CANNOT_GET_tx_DRIVER_BFM","cannot get() axi4_slave_drv_bfm_h");
+      `uvm_fatal(get_type_name(),"Cannot get axi4_slave_driver_bfm handle from uvm_config_db - was it set() in hdl_top/agent?");
     end
   endfunction : build_phase
 
@@ -164,7 +164,7 @@
   //--------------------------------------------------------------------------------------------
   task axi4_slave_driver_proxy::run_phase(uvm_phase phase);
 
-    `uvm_info(get_type_name(),"SLAVE_DRIVER_PROXY",UVM_MEDIUM)
+    `uvm_info(get_type_name(),"Slave driver proxy started - waiting for system reset",UVM_LOW)
 
     //wait for system reset
     axi4_slave_drv_bfm_h.wait_for_system_reset();
@@ -205,7 +205,10 @@
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH); 
           axi4_slave_drv_bfm_h.axi4_write_address_phase(struct_write_packet);
           axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_addr_tx);
-          `uvm_info("DEBUG_SLAVE_WRITE_ADDR_PROXY", $sformatf("AFTER :: Received req packet \n %s",local_slave_addr_tx.sprint()), UVM_MEDIUM);
+          `uvm_info(get_type_name(), $sformatf("AW accepted | awid=%0d awaddr=0x%0h awlen=%0d awsize=%s awburst=%s",
+                    local_slave_addr_tx.awid, local_slave_addr_tx.awaddr, local_slave_addr_tx.awlen,
+                    local_slave_addr_tx.awsize.name(), local_slave_addr_tx.awburst.name()), UVM_MEDIUM)
+          `uvm_info(get_type_name(), $sformatf("Write address packet:\n%s",local_slave_addr_tx.sprint()), UVM_HIGH)
           axiSlaveAddressQueue.push_back(local_slave_addr_tx);
           axiSlaveIdQueue.push_back(local_slave_addr_tx.awid);
         end:WRITE_ADDRESS_CHANNEL
@@ -223,7 +226,9 @@
           axi4_slave_drv_bfm_h.axi4_write_data_phase(struct_write_packet,struct_cfg);
           `uvm_info("DEBUG_SLAVE_WDATA_PROXY", $sformatf("AFTER :: Reciving struct pkt from bfm \n%p",struct_write_packet), UVM_HIGH);
           axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_data_tx);
-          `uvm_info("DEBUG_SLAVE_WDATA_PROXY_TO_CLASS", $sformatf("AFTER TO CLASS :: Received req packet \n %s", local_slave_data_tx.sprint()), UVM_MEDIUM);
+          `uvm_info(get_type_name(), $sformatf("W data sampled | beats=%0d wlast=%0b",
+                    local_slave_data_tx.wdata.size(), local_slave_data_tx.wlast), UVM_MEDIUM)
+          `uvm_info(get_type_name(), $sformatf("Write data packet:\n%s", local_slave_data_tx.sprint()), UVM_HIGH)
           axiSlaveDataQueue.push_back(local_slave_data_tx);
           numberOfDataTransaction++;
           semaphore_write_key.put(1);
@@ -249,7 +254,7 @@
           semaphore_rsp_write_key.get(1);
 
           if(axi4_slave_write_response_fifo_h.is_empty) begin 
-            `uvm_error(get_type_name(),$sformatf("WRITE_RESP_THREAD::Cannot get write resp data from FIFO as WRITE_RESP_FIFO is EMPTY"));
+            `uvm_error(get_type_name(),"Write-response FIFO is empty - no pending write to respond to (check AW/W handshake)");
           end 
           else begin 
             //getting the data from response fifo
@@ -317,6 +322,9 @@
             end
             axi4_slave_drv_bfm_h.axi4_write_response_phase(struct_write_packet,struct_cfg,bid_local);
           end 
+
+          `uvm_info(get_type_name(), $sformatf("B response driven | bid=%0d bresp=%s",
+                    bid_local, bresp_e'(struct_write_packet.bresp).name()), UVM_MEDIUM)
 
           //Converting struct into transaction data type
           axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_response_tx);
@@ -394,7 +402,10 @@
           axiReadSlaveAddressQueue.push_back(local_slave_tx);
           axiReadSlaveIdQueue.push_back(local_slave_tx.arid);
           waitStates++; 
-          `uvm_info("DEBUG_SLAVE_READ_ADDR_PROXY", $sformatf("AFTER :: Received req packet \n %s",local_slave_tx.sprint()), UVM_MEDIUM);
+          `uvm_info(get_type_name(), $sformatf("AR accepted | arid=%0d araddr=0x%0h arlen=%0d arsize=%s arburst=%s",
+                    local_slave_tx.arid, local_slave_tx.araddr, local_slave_tx.arlen,
+                    local_slave_tx.arsize.name(), local_slave_tx.arburst.name()), UVM_MEDIUM)
+          `uvm_info(get_type_name(), $sformatf("Read address packet:\n%s",local_slave_tx.sprint()), UVM_HIGH)
 
         end : READ_ADDRESS_CHANNEL
 
@@ -500,7 +511,7 @@
       int unalignedAmount;
       if(addr % (2**struct_write_packet.awsize) != 0) begin
         unalignedAmount = addr - ((addr/(2**struct_write_packet.awsize))*(2**struct_write_packet.awsize));
-        `uvm_info("SLAVE DRIVER PROXY",$sformatf("THE WRITE ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,struct_write_packet.awsize,addr),UVM_HIGH)
+        `uvm_info(get_type_name(),$sformatf("THE WRITE ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,struct_write_packet.awsize,addr),UVM_HIGH)
       end
       for(int j=0,int k=0;j<(struct_write_packet.awlen+1);j++)begin
         `uvm_info("DEBUG_MEMORY_WRITE",$sformatf("memory_task_awlen=%d",struct_write_packet.awlen),UVM_HIGH)
@@ -511,7 +522,7 @@
           `uvm_info("DEBUG_MEMORY_WRITE", $sformatf("task_memory_write inside for loop wstrb = %0h,k=%0d",struct_write_packet.wstrb[strb],k), UVM_HIGH);
           k = addr % (DATA_WIDTH/8);
           if(struct_write_packet.wstrb[j][k] == 1) begin
-            `uvm_info("SLAVE DRIVER PROXY",$sformatf("THE BYTE WRITTEN TO THE MEMORY IS %h AND THE ADDRESS IS %0d",struct_write_packet.wdata[j][8*k+7 -: 8],addr),UVM_HIGH)
+            `uvm_info(get_type_name(),$sformatf("THE BYTE WRITTEN TO THE MEMORY IS %h AND THE ADDRESS IS %0d",struct_write_packet.wdata[j][8*k+7 -: 8],addr),UVM_HIGH)
             axi4_slave_mem_h.mem_write(addr,struct_write_packet.wdata[j][8*k+7 -: 8]);
           end
           addr++;
@@ -522,12 +533,12 @@
       int unalignedAmount;
       if(addr % (2**struct_write_packet.awsize) != 0) begin
         unalignedAmount = addr - ((addr/(2**struct_write_packet.awsize))*(2**struct_write_packet.awsize));
-        `uvm_info("SLAVE DRIVER PROXY",$sformatf("THE WRITE ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,struct_write_packet.awsize,addr),UVM_HIGH)
+        `uvm_info(get_type_name(),$sformatf("THE WRITE ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,struct_write_packet.awsize,addr),UVM_HIGH)
       end
       lower_addr = struct_write_packet.awaddr - int'(struct_write_packet.awaddr%((struct_write_packet.awlen+1)*(2**struct_write_packet.awsize)));
       end_addr = lower_addr + ((struct_write_packet.awlen+1)*(2**struct_write_packet.awsize));
 
-      `uvm_info("SLAVE DRIVER PROXY",$sformatf("WRITE WRAP TRANSFER ADDRESS BOUNDARY IS %0d to %0d",lower_addr,end_addr),UVM_HIGH)
+      `uvm_info(get_type_name(),$sformatf("WRITE WRAP TRANSFER ADDRESS BOUNDARY IS %0d to %0d",lower_addr,end_addr),UVM_HIGH)
 
       for(int j=0,int k=0;j<(struct_write_packet.awlen+1);j++)begin
         `uvm_info("DEBUG_MEMORY_WRITE",$sformatf("memory_task_awlen=%d",struct_write_packet.awlen),UVM_HIGH)
@@ -538,7 +549,7 @@
           k = addr %(DATA_WIDTH/8);
           if(struct_write_packet.wstrb[j][k] == 1) begin
             if(addr < end_addr)  begin
-              `uvm_info("SLAVE DRIVER PROXY",$sformatf("THE BYTE WRITTEN TO THE MEMORY IS %h AND THE ADDRESS IS %0d",struct_write_packet.wdata[j][8*k+7 -: 8],addr),UVM_HIGH) 
+              `uvm_info(get_type_name(),$sformatf("THE BYTE WRITTEN TO THE MEMORY IS %h AND THE ADDRESS IS %0d",struct_write_packet.wdata[j][8*k+7 -: 8],addr),UVM_HIGH) 
               axi4_slave_mem_h.mem_write(addr,struct_write_packet.wdata[j][8*k+7 -: 8]);
             end 
           end
@@ -582,7 +593,7 @@
       int unalignedAmount;
       if(read_pkt.araddr % (2**read_pkt.arsize) != 0) begin
         unalignedAmount = read_pkt.araddr - ((read_pkt.araddr/(2**read_pkt.arsize))*(2**read_pkt.arsize));
-        `uvm_info("SLAVE DRIVER PROXY",$sformatf("THE READ ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,read_pkt.arsize,addr),UVM_HIGH)
+        `uvm_info(get_type_name(),$sformatf("THE READ ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,read_pkt.arsize,addr),UVM_HIGH)
 
       end
       for(int j=0,int k=0;j<(read_pkt.arlen+1);j++)begin
@@ -599,12 +610,12 @@
 
             axi4_slave_mem_h.mem_read(addr,struct_read_packet.rdata[0][8*k+7 -: 8]);
             addr++;
-            `uvm_info("SLAVE DRIVER PROXY",$sformatf("SLAVE WRAP READ THE DATA EXISTS READ FROM %0d AND READ DATA IS %0d",addr,struct_read_packet.rdata[0][8*k+7 -: 8]),UVM_HIGH)
+            `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA EXISTS READ FROM %0d AND READ DATA IS %0d",addr,struct_read_packet.rdata[0][8*k+7 -: 8]),UVM_HIGH)
 
           end 
           else begin 
             struct_read_packet.rresp[0] = READ_SLVERR;
-            `uvm_info("SLAVE DRIVER PROXY",$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",addr),UVM_HIGH)
+            `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",addr),UVM_HIGH)
             struct_read_packet.rdata[0][8*k+7 -:8] = '0;
             addr++;
           end 
@@ -618,12 +629,12 @@
       int unalignedAmount;
       lower_addr = read_pkt.araddr - int'(read_pkt.araddr%((read_pkt.arlen+1)*(2**read_pkt.arsize)));
       end_addr = lower_addr + ((read_pkt.arlen+1)*(2**read_pkt.arsize));
-      `uvm_info("SLAVE DRIVER PROXY",$sformatf("READ WRAP TRANSFER ADDRESS BOUNDARY IS %0d to %0d",lower_addr,end_addr),UVM_HIGH)
+      `uvm_info(get_type_name(),$sformatf("READ WRAP TRANSFER ADDRESS BOUNDARY IS %0d to %0d",lower_addr,end_addr),UVM_HIGH)
 
       k_t = read_pkt.araddr;
       if(k_t % (2**read_pkt.arsize) != 0) begin
         unalignedAmount = k_t - ((k_t/(2**read_pkt.arsize))*(2**read_pkt.arsize));
-        `uvm_info("SLAVE DRIVER PROXY",$sformatf("THE READ ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,read_pkt.arsize,k_t),UVM_HIGH)
+        `uvm_info(get_type_name(),$sformatf("THE READ ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,read_pkt.arsize,k_t),UVM_HIGH)
       end
       for(int j=0,int k=0;j<(read_pkt.arlen+1);j++)begin
         struct_read_packet.rresp[0] = READ_OKAY;
@@ -637,11 +648,11 @@
             k = k_t % (DATA_WIDTH/8);
             if(axi4_slave_mem_h.is_slave_addr_exists(k_t))begin  
               axi4_slave_mem_h.mem_read(k_t,struct_read_packet.rdata[0][8*k+7 -: 8]);
-              `uvm_info("SLAVE DRIVER PROXY",$sformatf("SLAVE WRAP READ THE DATA EXISTS READ FROM %0d AND READ DATA IS %0d",k_t,struct_read_packet.rdata[0][8*k+7 -: 8]),UVM_HIGH)
+              `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA EXISTS READ FROM %0d AND READ DATA IS %0d",k_t,struct_read_packet.rdata[0][8*k+7 -: 8]),UVM_HIGH)
               k_t++;
             end 
             else begin
-              `uvm_info("SLAVE DRIVER PROXY",$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",k_t),UVM_HIGH)
+              `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",k_t),UVM_HIGH)
 
               struct_read_packet.rresp[0] = READ_SLVERR;
               struct_read_packet.rdata[0][8*k+7 -:8] = '0;

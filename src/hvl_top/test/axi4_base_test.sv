@@ -54,7 +54,9 @@ endfunction : new
 //--------------------------------------------------------------------------------------------
 function void axi4_base_test::build_phase(uvm_phase phase);
   super.build_phase(phase);
-  // Setup the environemnt cfg 
+  `uvm_info(get_type_name(), $sformatf("Building environment | masters=%0d slaves=%0d",
+            NO_OF_MASTERS, NO_OF_SLAVES), UVM_LOW)
+  // Setup the environment cfg
   setup_axi4_env_cfg();
   // Create the environment
   axi4_env_h = axi4_env::type_id::create("axi4_env_h",this);
@@ -86,7 +88,7 @@ function void axi4_base_test:: setup_axi4_env_cfg();
 
   // set method for axi4_env_cfg
   uvm_config_db #(axi4_env_config)::set(this,"*","axi4_env_config",axi4_env_cfg_h);
-  `uvm_info(get_type_name(),$sformatf("\nAXI4_ENV_CONFIG\n%s",axi4_env_cfg_h.sprint()),UVM_LOW);
+  `uvm_info(get_type_name(),$sformatf("\nAXI4_ENV_CONFIG\n%s",axi4_env_cfg_h.sprint()),UVM_HIGH);
 endfunction: setup_axi4_env_cfg
 
 //--------------------------------------------------------------------------------------------
@@ -128,7 +130,7 @@ endfunction: setup_axi4_master_agent_cfg
 function void axi4_base_test::set_and_display_master_config();
   foreach(axi4_env_cfg_h.axi4_master_agent_cfg_h[i])begin
     uvm_config_db#(axi4_master_agent_config)::set(this,"*env*",$sformatf("axi4_master_agent_config[%0d]",i),axi4_env_cfg_h.axi4_master_agent_cfg_h[i]);
-   `uvm_info(get_type_name(),$sformatf("\nAXI4_MASTER_CONFIG[%0d]\n%s",i,axi4_env_cfg_h.axi4_master_agent_cfg_h[i].sprint()),UVM_LOW);
+   `uvm_info(get_type_name(),$sformatf("\nAXI4_MASTER_CONFIG[%0d]\n%s",i,axi4_env_cfg_h.axi4_master_agent_cfg_h[i].sprint()),UVM_HIGH);
  end
 endfunction: set_and_display_master_config
 
@@ -168,7 +170,7 @@ endfunction: setup_axi4_slave_agent_cfg
 function void axi4_base_test::set_and_display_slave_config();
   foreach(axi4_env_cfg_h.axi4_slave_agent_cfg_h[i])begin
     uvm_config_db #(axi4_slave_agent_config)::set(this,"*env*",$sformatf("axi4_slave_agent_config[%0d]",i), axi4_env_cfg_h.axi4_slave_agent_cfg_h[i]);   
-   `uvm_info(get_type_name(),$sformatf("\nAXI4_SLAVE_CONFIG[%0d]\n%s",i,axi4_env_cfg_h.axi4_slave_agent_cfg_h[i].sprint()),UVM_LOW);
+   `uvm_info(get_type_name(),$sformatf("\nAXI4_SLAVE_CONFIG[%0d]\n%s",i,axi4_env_cfg_h.axi4_slave_agent_cfg_h[i].sprint()),UVM_HIGH);
  end
 endfunction: set_and_display_slave_config
 //--------------------------------------------------------------------------------------------
@@ -194,10 +196,10 @@ task axi4_base_test::run_phase(uvm_phase phase);
 
   phase.raise_objection(this, "axi4_base_test");
 
-  `uvm_info(get_type_name(), $sformatf("Inside BASE_TEST"), UVM_NONE);
+  `uvm_info(get_type_name(), $sformatf("===== TEST START: %s =====", get_type_name()), UVM_LOW)
   super.run_phase(phase);
   #100;
-  `uvm_info(get_type_name(), $sformatf("Done BASE_TEST"), UVM_NONE);
+  `uvm_info(get_type_name(), $sformatf("===== TEST DONE: %s =====", get_type_name()), UVM_LOW)
   phase.drop_objection(this);
 
 endtask : run_phase
