@@ -6,7 +6,6 @@
 +incdir+../../src/hvl_top/test/virtual_sequences/
 +incdir+../../src/hvl_top/env
 +incdir+../../src/hvl_top/slave
-+incdir+../../src/hvl_top/test/sequences/slave_sequences/
 +incdir+../../src/hvl_top/test
 +incdir+../../src/hdl_top/slave_agent_bfm
 +incdir+../../src/hdl_top/axi4_interface
@@ -14,7 +13,6 @@
 ../../src/hvl_top/master/axi4_master_pkg.sv
 ../../src/hvl_top/slave/axi4_slave_pkg.sv
 ../../src/hvl_top/test/sequences/master_sequences/axi4_master_seq_pkg.sv
-../../src/hvl_top/test/sequences/slave_sequences/axi4_slave_seq_pkg.sv
 ../../src/hvl_top/env/axi4_env_pkg.sv
 ../../src/hvl_top/test/virtual_sequences/axi4_virtual_seq_pkg.sv
 ../../src/hvl_top/test/axi4_test_pkg.sv

@@ -10,11 +10,18 @@ class axi4_master_base_seq extends uvm_sequence #(axi4_master_tx);
   //factory registration
   `uvm_object_utils(axi4_master_base_seq)
   
+  awsize_e tranSize;
+
+  transfer_type_e transferType;
+  
+  awburst_e burstType;
+  
+  tx_type_e writeOrRead;
   //-------------------------------------------------------
   // Externally defined Function
   //-------------------------------------------------------
   extern function new(string name = "axi4_master_base_seq");
-
+  extern task body();
 endclass : axi4_master_base_seq
 
 //-----------------------------------------------------------------------------
@@ -27,5 +34,31 @@ endclass : axi4_master_base_seq
 function axi4_master_base_seq::new(string name = "axi4_master_base_seq");
   super.new(name);
 endfunction : new
+
+//-----------------------------------------------------------------------------
+// Task: body
+// based on the request from driver task will drive the transactions
+task axi4_master_base_seq::body();
+  super.body();
+    `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: BEFORE axi4_master_bk_write_32b_transfer_seq"), UVM_NONE); 
+
+  req = axi4_master_tx::type_id::create("req");
+  
+  start_item(req);
+  if(!req.randomize() with {req.awsize == tranSize;
+                              req.tx_type == writeOrRead;
+                              req.transfer_type == transferType;
+                              req.awburst == burstType;}) begin
+    
+    `uvm_fatal("axi4","Rand failed");
+  end
+  
+  `uvm_info(get_type_name(), $sformatf("master_seq \n%s",req.sprint()), UVM_NONE); 
+  
+  finish_item(req);
+  `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: AFTER axi4_master_bk_write_32b_transfer_seq"), UVM_NONE); 
+
+endtask : body
+
 
 `endif

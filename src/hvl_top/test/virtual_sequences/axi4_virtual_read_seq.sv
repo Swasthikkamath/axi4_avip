@@ -8,19 +8,9 @@
 class axi4_virtual_read_seq extends axi4_virtual_base_seq;
   `uvm_object_utils(axi4_virtual_read_seq)
 
-  //Variable: axi4_master_bk_read_seq_h
-  //Instantiation of axi4_master_bk_read_seq handle
-  axi4_master_bk_read_seq axi4_master_bk_read_seq_h;
-  //Variable: axi4_master_nbk_read_seq_h
-  //Instantiation of axi4_master_nbk_read_seq handle
-  axi4_master_nbk_read_seq axi4_master_nbk_read_seq_h;
-
-  //Variable: axi4_slave_read_seq_h
-  //Instantiation of axi4_slave_read_seq handle
-  axi4_slave_bk_read_seq axi4_slave_bk_read_seq_h;
-  //Variable: axi4_slave_nbk_read_seq_h
-  //Instantiation of axi4_slave_nbk_read_seq handle
-  axi4_slave_nbk_read_seq axi4_slave_nbk_read_seq_h;
+  //Variable: axi4_master_read_seq_h
+  //Instantiation of axi4_master_read_seq handle
+  axi4_master_base_seq axi4_master_read_seq_h;
 
   //-------------------------------------------------------
   // Externally defined Tasks and Functions
@@ -45,23 +35,20 @@ endfunction : new
 // Creates and starts the data of master and slave sequences
 //--------------------------------------------------------------------------------------------
 task axi4_virtual_read_seq::body();
-  axi4_master_bk_read_seq_h = axi4_master_bk_read_seq::type_id::create("axi4_master_bk_read_seq_h");
-  axi4_master_nbk_read_seq_h = axi4_master_nbk_read_seq::type_id::create("axi4_master_nbk_read_seq_h");
-  axi4_slave_bk_read_seq_h = axi4_slave_bk_read_seq::type_id::create("axi4_slave_bk_read_seq_h");
-  axi4_slave_nbk_read_seq_h = axi4_slave_nbk_read_seq::type_id::create("axi4_slave_nbk_read_seq_h");
-   fork
-    forever begin
-      axi4_slave_bk_read_seq_h.start(p_sequencer.axi4_slave_read_seqr_h);
-      axi4_slave_nbk_read_seq_h.start(p_sequencer.axi4_slave_read_seqr_h);
-    end
-  join_none
-/*
-  repeat(5) begin
-    axi4_master_bk_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
-    axi4_master_nbk_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
-  end
+  axi4_master_read_seq_h = axi4_master_base_seq::type_id::create("axi4_master_read_seq_h");
 
-*/
+  axi4_master_read_seq_h.tranSize = readTranSize;
+  axi4_master_read_seq_h.transferType = readTransferType;
+  axi4_master_read_seq_h.burstType = readBurstType;
+  axi4_master_read_seq_h.readOrRead  = READ; 
+  `uvm_info(get_type_name(), $sformatf("DEBUG_MSHA :: Insdie axi4_virtual_read_seq"), UVM_NONE); 
+  fork 
+    begin: T1_WRITE
+      repeat(5) begin
+        axi4_master_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
+      end
+    end
+  join
  endtask : body
 
 `endif

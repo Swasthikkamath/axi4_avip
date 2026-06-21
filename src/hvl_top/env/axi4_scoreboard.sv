@@ -173,7 +173,6 @@ class axi4_scoreboard extends uvm_scoreboard;
    int indextemp[$];
   int index;
  
- int align;
  int alignAmount;
  axi4_master_tx t;
  axi4_master_tx temp;
@@ -187,19 +186,16 @@ class axi4_scoreboard extends uvm_scoreboard;
  axi4_slave_tx axi_slave_address_tx;
   rresp_e readError;
   bit slave_err;
-  
   int count;
   bit flag1;
   bit flag2;
-
-
 
   //Variable : axi4_env_cfg_h
   //Declaring handle for axi4_env_config_object
   axi4_env_config axi4_env_cfg_h;
   axi4_slave_agent_config axi4_slave_agent_cfg_h;
   
-  uvm_tlm_fifo #(int) referenceFifo;
+  uvm_tlm_fifo #(bit[7:0]) referenceFifo;
   //-------------------------------------------------------
   // Externally defined Tasks and Functions
   //-------------------------------------------------------
@@ -234,33 +230,29 @@ endclass : axi4_scoreboard
 
 function void axi4_scoreboard :: write_master_write_data(axi4_master_tx t);
   DataTransaction tempTransaction;
-
-   tempTransaction.data = t.wdata[0];
+  tempTransaction.data = t.wdata[0];
   tempTransaction.strobe = t.wstrb[0];
-    if(t.wlast == 1) begin 
-      masterArrayDataQueue[index1].push_back(tempTransaction);
-      index1++;
-      axi4_master_tx_wdata_count++;     
-
-    end
-    else begin 
-      masterArrayDataQueue[index1].push_back(tempTransaction);
-    end
+  if(t.wlast == 1) begin 
+    masterArrayDataQueue[index1].push_back(tempTransaction);
+    index1++;
+    axi4_master_tx_wdata_count++;     
+  end else begin 
+    masterArrayDataQueue[index1].push_back(tempTransaction);
+  end
 endfunction 
 
 function void axi4_scoreboard :: write_slave_write_data(axi4_slave_tx t);
   DataTransaction tempTransaction;
-   tempTransaction.data = t.wdata[0];
+  tempTransaction.data = t.wdata[0];
   tempTransaction.strobe = t.wstrb[0];
-    if(t.wlast == 1) begin 
-      slaveArrayDataQueue[index2].push_back(tempTransaction);
-      index2++;
-       axi4_slave_tx_wdata_count++;
-    end
-    else begin 
-      slaveArrayDataQueue[index2].push_back(tempTransaction);
-
-    end
+  if(t.wlast == 1) begin 
+    slaveArrayDataQueue[index2].push_back(tempTransaction);
+    index2++;
+    axi4_slave_tx_wdata_count++;
+  end
+  else begin 
+    slaveArrayDataQueue[index2].push_back(tempTransaction);
+  end
 endfunction 
 
 
@@ -273,7 +265,7 @@ endfunction
 function void axi4_scoreboard :: write_slave_write_address(axi4_slave_tx t);
   axi4_slave_tx_awaddr_count++;
   slaveWriteAddressQueue[count2]=(t);
- count2++;
+  count2++;
 endfunction 
 
 function void axi4_scoreboard :: write_master_read_address(axi4_master_tx t);
@@ -388,12 +380,8 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
       axi4_write_address_comparision(axi_master_address_tx,axi_slave_address_tx); //address check done 
           
       if((axi_master_address_tx.awaddr % (2**axi_master_address_tx.awsize))!= 0) begin
-        align =0; 
-        alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))  *(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
+        alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))*(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
       end
-      else begin 
-        align=1;
-      end 
       for(int i=0;i < masterArrayDataQueue[index].size();i++) begin    
         int count =0; 
         int j=0;
@@ -410,20 +398,22 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
     
         case(axi_master_address_tx.awburst)
           2'b 00: begin 
-            for(int j=0;j<((2**(axi_master_address_tx.awsize)-(alignAmount)));j++) begin 
+            for(int j=0,k=0;j<((2**(axi_master_address_tx.awsize)));j++) begin 
               if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
                 temp.bresp = WRITE_SLVERR;
               end 
-              if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
-                `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
+              k=tempAddress % (DATA_WIDTH/8);
+              if(masterArrayDataQueue[index][i].data[8*k+7 -: 8] != slaveArrayDataQueue[index][i].data[8*k+7 -: 8])begin 
+                `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8],slaveArrayDataQueue[index][i].data[8*k+7 -: 8]))
                 byte_data_cmp_failed_wdata_count++;
               end 
               else begin 
-                `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
+                `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8]),UVM_NONE);
 
                 byte_data_cmp_verified_wdata_count++;
               end    
-              referenceFifo.put(masterArrayDataQueue[index][i].data[8*j+7-:8]);            
+              referenceFifo.put(masterArrayDataQueue[index][i].data[8*k+7-:8]);  
+              tempAddress++;
             end  
           end  
           2'b 01: begin 
@@ -506,12 +496,8 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
         wrapEndAddress = wrapStartAddress + (((2**(axi_master_address_tx.arsize))* (axi_master_address_tx.arlen +1)));
         axi4_read_address_comparision(axi_master_address_tx,axi_slave_address_tx); //address check done 
         if(axi_master_address_tx.araddr % (2**axi_master_address_tx.arsize) != 0) begin
-          align =0; 
           alignAmount = axi_master_address_tx.araddr %((2**(axi_master_address_tx.arsize)));          
         end
-        else begin 
-          align=1;
-        end 
         flag=1;
       end
       else begin 

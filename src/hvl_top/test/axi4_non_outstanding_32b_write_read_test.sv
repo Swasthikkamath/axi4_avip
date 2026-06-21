@@ -10,7 +10,7 @@ class axi4_non_outstanding_32b_write_read_test extends axi4_base_test;
 
   //Variable : axi4_virtual_bk_32b_write_read_seq_h
   //Instatiation of axi4_virtual_bk_32b_write_read_seq
-  axi4_virtual_bk_32b_write_read_seq axi4_virtual_bk_32b_write_read_seq_h;
+  axi4_virtual_write_read_seq axi4_virtual_bk_32b_write_read_seq_h;
   
   //-------------------------------------------------------
   // Externally defined Tasks and Functions
@@ -34,21 +34,26 @@ endfunction : new
 
 //--------------------------------------------------------------------------------------------
 // Task: run_phase
-// Creates the axi4_virtual_32b_write_read_seq sequence and starts the write and read virtual sequences
+// Creates the axi4_virtual_32b_write_read_seq sequence and starts the write and read  virtual sequences
 //
 // Parameters:
 //  phase - uvm phase
 //--------------------------------------------------------------------------------------------
 task axi4_non_outstanding_32b_write_read_test::run_phase(uvm_phase phase);
-  uvm_objection phase_done;
-   phase_done  = phase.get_objection() ;
-  axi4_virtual_bk_32b_write_read_seq_h=axi4_virtual_bk_32b_write_read_seq::type_id::create("axi4_virtual_bk_32b_write_read_seq_h");
+
+  axi4_virtual_bk_32b_write_read_seq_h=axi4_virtual_write_read_seq::type_id::create("axi4_virtual_bk_32b_write_read_seq_h");
   `uvm_info(get_type_name(),$sformatf("axi4_non_outstanding_32b_write_read_test"),UVM_LOW);
+  axi4_virtual_bk_32b_data_write_read_seq_h.writeTransize = WRITE_32_BYTES;
+  axi4_virtual_bk_32b_data_write_read_seq_h.writeTransferType = NON_OUTSTANDING_WRITE;
+  axi4_virtual_bk_32b_data_write_read_seq_h.writeBurstType = WRITE_INCR;
+
+  axi4_virtual_bk_32b_data_write_read_seq_h.readTransize = READ_32_BYTES;
+  axi4_virtual_bk_32b_data_write_read_seq_h.readTransferType = NON_OUTSTANDING_READ;
+  axi4_virtual_bk_32b_data_write_read_seq_h.readBurstType = READ_INCR;
+
   phase.raise_objection(this);
   axi4_virtual_bk_32b_write_read_seq_h.start(axi4_env_h.axi4_virtual_seqr_h);
   phase.drop_objection(this);
- 
-//  phase_done.set_drain_time(this, 500ns) ;
 
 endtask : run_phase
 
