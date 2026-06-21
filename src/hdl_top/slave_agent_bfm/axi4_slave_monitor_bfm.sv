@@ -211,7 +211,7 @@ interface axi4_slave_monitor_bfm(input aclk, input aresetn,
       // Wait for valid and ready to be high
       do begin
         @(slaveMonCb);
-      end while((rvalid!==1 || rready!==1));
+      end while((slaveMonCb.rvalid!==1 || slaveMonCb.rready!==1));
   
       `uvm_info("FROM SLAVE MON BFM",$sformatf("after do_while loop of read data sample"),UVM_HIGH)
 
