@@ -10,13 +10,23 @@ class axi4_master_base_seq extends uvm_sequence #(axi4_master_tx);
   //factory registration
   `uvm_object_utils(axi4_master_base_seq)
   
-  awsize_e tranSize;
+  awsize_e writeTranSize;
 
-  transfer_type_e transferType;
+  transfer_type_e writeTransferType;
   
-  awburst_e burstType;
+  awburst_e writeBurstType;
   
   tx_type_e writeOrRead;
+
+   arsize_e readTranSize;
+
+  transfer_type_e readTransferType;
+  
+  arburst_e readBurstType;
+  
+
+
+
   //-------------------------------------------------------
   // Externally defined Function
   //-------------------------------------------------------
@@ -45,13 +55,26 @@ task axi4_master_base_seq::body();
   req = axi4_master_tx::type_id::create("req");
   
   start_item(req);
-  if(!req.randomize() with {req.awsize == tranSize;
+  if(writeOrRead == WRITE) begin
+    if(!req.randomize() with {req.awsize == writeTranSize;
                               req.tx_type == writeOrRead;
-                              req.transfer_type == transferType;
-                              req.awburst == burstType;}) begin
+                              req.transfer_type == writeTransferType;
+                              req.awburst == writeBurstType;}) begin
     
-    `uvm_fatal("axi4","Rand failed");
+      `uvm_fatal("axi4","Rand failed");
+    end
   end
+  else begin 
+   if(!req.randomize() with {req.arsize == readTranSize;
+                              req.tx_type == writeOrRead;
+                              req.transfer_type == readTransferType;
+                              req.arburst == readBurstType;}) begin
+    
+      `uvm_fatal("axi4","Rand failed");
+    end
+     
+
+  end 
   
   `uvm_info(get_type_name(), $sformatf("master_seq \n%s",req.sprint()), UVM_NONE); 
   

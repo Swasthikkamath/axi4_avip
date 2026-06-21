@@ -222,7 +222,6 @@ class axi4_master_tx extends uvm_sequence_item;
 
   //Constraint : awburst_c1
   //Restricting write burst to select only FIXED, INCR and WRAP types
-  constraint awburst_c1 {awburst != WRITE_RESERVED;}
 
   //Constraint : awlength_c2
   //Adding constraint for restricting write trasnfers
@@ -246,7 +245,7 @@ class axi4_master_tx extends uvm_sequence_item;
 
   //Constraint : awsize_c6
   //Adding a soft constraint to detrmine the awsize
-  constraint awsize_c6 {soft awsize inside {[0:2]};}
+  //constraint awsize_c6 {soft awsize inside {[0:2]};}
 
   //-------------------------------------------------------
   // WRITE DATA Constraints
@@ -281,7 +280,7 @@ class axi4_master_tx extends uvm_sequence_item;
   
   //Constraint : arburst_c1
   //Restricting read burst to select only FIXED, INCR and WRAP types
-  constraint arburst_c1 { arburst != READ_RESERVED;}
+  constraint arburst_c1 { soft arburst != READ_RESERVED;}
 
   //Constraint : arlength_c2
   //Adding constraint for restricting read trasnfers
