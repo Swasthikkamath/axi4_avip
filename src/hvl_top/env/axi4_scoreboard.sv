@@ -190,6 +190,14 @@ class axi4_scoreboard extends uvm_scoreboard;
   bit flag1;
   bit flag2;
 
+  // Per-transaction pass/fail tracking
+  // A transaction is FAIL if at least one data byte mismatched (wdata for
+  // writes, rdata for reads); otherwise it is PASS.
+  int total_write_txn, passed_write_txn, failed_write_txn;
+  int total_read_txn,  passed_read_txn,  failed_read_txn;
+  bit write_txn_failed; // set when any wdata byte of current write txn mismatches
+  bit read_txn_failed;  // set when any rdata byte of current read txn mismatches
+
   //Variable : axi4_env_cfg_h
   //Declaring handle for axi4_env_config_object
   axi4_env_config axi4_env_cfg_h;
@@ -364,7 +372,8 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
     forever begin
       axi4_master_write_response_analysis_fifo.get(temp);
       axi4_master_tx_bresp_count++;
-      `uvm_info("CHECK","ENTERED FOR WRITE CHECK ",UVM_NONE) 
+      write_txn_failed = 0;
+      `uvm_info("CHECK","ENTERED FOR WRITE CHECK ",UVM_NONE)
       axi4_slave_write_response_analysis_fifo.get(t2);
       axi4_slave_tx_bresp_count++;
       indextemp = slaveWriteAddressQueue.find_first_index() with(item.awid == t2.bid);
@@ -406,6 +415,7 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
               if(masterArrayDataQueue[index][i].data[8*k+7 -: 8] != slaveArrayDataQueue[index][i].data[8*k+7 -: 8])begin 
                 `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8],slaveArrayDataQueue[index][i].data[8*k+7 -: 8]))
                 byte_data_cmp_failed_wdata_count++;
+                write_txn_failed = 1;
               end 
               else begin 
                 `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8]),UVM_NONE);
@@ -424,7 +434,8 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
               j =tempAddress % (DATA_WIDTH/8);
               if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
                 `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
-                byte_data_cmp_failed_wdata_count++; 
+                byte_data_cmp_failed_wdata_count++;
+                write_txn_failed = 1; 
               end
               else begin 
                 `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
@@ -447,6 +458,7 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
               if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
                 `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
                 byte_data_cmp_failed_wdata_count++;
+                write_txn_failed = 1;
               end
               else begin 
                 `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
@@ -462,9 +474,14 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
           end 
         endcase   
       end
+      total_write_txn++;
+      if(write_txn_failed) failed_write_txn++;
+      else                 passed_write_txn++;
+      `uvm_info(get_type_name(),$sformatf("WRITE transaction %0s | total_write=%0d pass=%0d fail=%0d",
+                write_txn_failed ? "FAIL" : "PASS", total_write_txn, passed_write_txn, failed_write_txn),UVM_MEDIUM)
       axi4_write_response_comparision(temp,t2);
       masterArrayDataQueue.delete(index);
-      slaveArrayDataQueue.delete(index); 
+      slaveArrayDataQueue.delete(index);
     end
         
 
@@ -482,6 +499,7 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
         indextemp = slaveReadAddressQueue.find_first_index() with(item.arid == t1.rid);
         index = indextemp[0];
         flag2=0;
+        read_txn_failed = 0; // new read transaction starts at its first beat
    
         if(masterReadAddressQueue[index].arid == t1.rid) begin 
           byte_data_cmp_verified_rid_count++;
@@ -518,7 +536,8 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
              if(t1.rdata[0][8*j+7-:8] !=readCompare) begin 
                `uvm_error("READ CHECK FAIL",$sformatf("THE READ DATA DOESNT MATCH when reference DATA  is %0d and actual one is %0d",readCompare,t1.rdata[0]))
                byte_data_cmp_failed_rdata_count++;
-             end   
+               read_txn_failed = 1;
+             end
              else begin 
                `uvm_info("READ CHECK PASS",$sformatf("THE READ DATA MATCHES  %0d",readCompare),UVM_NONE);
                byte_data_cmp_verified_rdata_count++;
@@ -536,6 +555,7 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,referenceData[tempAddress],t1.rdata[0][8*j+7-:8]))
                  byte_data_cmp_failed_rdata_count++;
+                 read_txn_failed = 1;
 
                end   
                else begin 
@@ -569,6 +589,7 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,readCompare,t1.rdata[0][8*j+7-:8]))
                  byte_data_cmp_failed_rdata_count++;
+                 read_txn_failed = 1;
                end   
                else begin 
                  byte_data_cmp_verified_rdata_count++;
@@ -591,8 +612,15 @@ task axi4_scoreboard::run_phase(uvm_phase phase);
                tempAddress = wrapStartAddress; 
            end     
          end 
-       endcase   
-     end 
+       endcase
+       if(t1.rlast == 1) begin
+         total_read_txn++;
+         if(read_txn_failed) failed_read_txn++;
+         else                passed_read_txn++;
+         `uvm_info(get_type_name(),$sformatf("READ transaction %0s | total_read=%0d pass=%0d fail=%0d",
+                   read_txn_failed ? "FAIL" : "PASS", total_read_txn, passed_read_txn, failed_read_txn),UVM_MEDIUM)
+       end
+     end
   join_none
 
 endtask : run_phase
@@ -1432,6 +1460,24 @@ function void axi4_scoreboard::report_phase(uvm_phase phase);
   //$display(" ");
     `uvm_info(get_type_name(),$sformatf("scoreboard's read response packets count from master \n %0d",axi4_master_tx_rresp_count),UVM_HIGH)
     `uvm_info(get_type_name(),$sformatf("scoreboard's read response packets count from slave   \n %0d",axi4_slave_tx_rresp_count),UVM_HIGH)
+
+  //-------------------------------------------------------------------------------------------
+  // Transaction-level PASS/FAIL summary
+  // A transaction is counted FAIL if at least one data byte mismatched
+  // (wdata for write transactions, rdata for read transactions).
+  //-------------------------------------------------------------------------------------------
+  `uvm_info(get_type_name(),"==================================================================",UVM_NONE)
+  `uvm_info(get_type_name(),"                 TRANSACTION PASS/FAIL SUMMARY                    ",UVM_NONE)
+  `uvm_info(get_type_name(),"==================================================================",UVM_NONE)
+  `uvm_info(get_type_name(),$sformatf("WRITE transactions : total=%0d  pass=%0d  fail=%0d",
+            total_write_txn, passed_write_txn, failed_write_txn),UVM_NONE)
+  `uvm_info(get_type_name(),$sformatf("READ  transactions : total=%0d  pass=%0d  fail=%0d",
+            total_read_txn, passed_read_txn, failed_read_txn),UVM_NONE)
+  `uvm_info(get_type_name(),$sformatf("TOTAL transactions : total=%0d  pass=%0d  fail=%0d",
+            total_write_txn + total_read_txn,
+            passed_write_txn + passed_read_txn,
+            failed_write_txn + failed_read_txn),UVM_NONE)
+  `uvm_info(get_type_name(),"==================================================================",UVM_NONE)
 
 endfunction : report_phase
 
