@@ -26,6 +26,12 @@ package axi4_globals_pkg;
   //Used to set number of slaves required
   parameter int NO_OF_SLAVES = 1;
 
+
+  parameter int MASTER_TRANSACTION_WRITE_ISSUE_COUNT =4;
+
+  parameter int MASTER_TRANSACTION_READ_ISSUE_COUNT =4;
+
+
   //Parameter: ADDRESS_WIDTH
   //Used to set the address width to the address bus
   parameter int ADDRESS_WIDTH = 32;

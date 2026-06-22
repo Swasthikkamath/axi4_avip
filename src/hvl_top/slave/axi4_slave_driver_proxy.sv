@@ -331,7 +331,9 @@
           //Calling combined data packet from converter class
           axi4_slave_seq_item_converter::tx_write_packet(local_slave_addr_tx,local_slave_data_tx,local_slave_response_tx,packet);
           task_memory_write(packet);
-
+          rsp_wr = RSP :: type_id :: create("RSP OBJECT"); 
+          rsp_wr.set_id_info(local_slave_response_tx);
+          axi_write_seq_item_port.put_response(rsp_wr); 
           wr_resp_cnt++;
           completed_initial_txn=1;
           flag =1;
@@ -463,7 +465,9 @@
 
           total_bytes = (local_slave_raddr_tx.arlen+1)*(2**(local_slave_raddr_tx.arsize));
           task_memory_read(local_slave_raddr_tx,struct_read_packet);
-
+           rsp_rd = RSP :: type_id :: create("RSP OBJECT"); 
+          rsp_rd.set_id_info(local_slave_rdata_tx);
+          axi_write_seq_item_port.put_response(rsp_rd); 
           readFlag =1;
           waitStates--;     
           //Putting back the key
