@@ -27,4 +27,4 @@
 ../../src/hvl_top/hvl_top.sv
 ../../src/hdl_top/master_assertions.sv
 ../../src/hdl_top/slave_assertions.sv
-../../src/RTL/axiMaster.v
+../../src/RTL/axiSlave.v
