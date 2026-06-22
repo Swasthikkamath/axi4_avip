@@ -57,21 +57,13 @@ task axi4_virtual_write_read_seq::body();
 
   fork
     begin: T1_BK_WRITE
-      repeat(MASTER_TRANSACTION_WRITE_ISSUE_COUNT) begin
         axi4_master_write_seq_h.start(p_sequencer.axi4_master_write_seqr_h);
-      end
     end
     begin: T2_BK_READ
-      repeat(MASTER_TRANSACTION_READ_ISSUE_COUNT) begin
         axi4_master_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
-      end
     end
   join
 
-  wait(axi4_master_write_seq_h.transCount == (MASTER_TRANSACTION_WRITE_ISSUE_COUNT+MASTER_TRANSACTION_READ_ISSUE_COUNT));
-
-  $display("I AM COMING OUT");
-  
  endtask : body
 
 `endif

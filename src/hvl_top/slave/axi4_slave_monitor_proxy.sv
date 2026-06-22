@@ -229,7 +229,7 @@ task axi4_slave_monitor_proxy::axi4_slave_read_data();
     
     
     $cast(req_rd_clone_packet,req_rd.clone());
-    `uvm_info(get_type_name(),$sformatf("Packet received from axi4_slave_read_data is \n %s",req_rd_clone_packet.sprint()),UVM_HIGH)
+    `uvm_info(get_type_name(),$sformatf("Packet received from axi4_slave_read_data is \n %s",req_rd_clone_packet.sprint()),UVM_NONE)
 
     axi4_slave_read_data_analysis_port.write(req_rd_clone_packet);
   end

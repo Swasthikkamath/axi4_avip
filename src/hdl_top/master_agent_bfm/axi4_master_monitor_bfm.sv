@@ -175,6 +175,7 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
     req.arlen   = masterMonCb.arlen;
     req.arsize  = masterMonCb.arsize;
     req.arburst = masterMonCb.arburst;
+    $display("ARBURST IS %d in bfm ",req.arburst);
     req.arlock  = masterMonCb.arlock;
     req.arcache = masterMonCb.arcache;
     req.arprot  = masterMonCb.arprot;
@@ -195,7 +196,8 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
       do begin
         @(masterMonCb);
       end while((masterMonCb.rvalid!==1 || masterMonCb.rready!==1));
-  
+ 
+      $display("OBTAINED DATA");
       req.rid      = masterMonCb.rid;
       req.rdata[0] = masterMonCb.rdata;
       req.ruser    = masterMonCb.ruser;

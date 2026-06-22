@@ -368,147 +368,9 @@
   task axi4_scoreboard::run_phase(uvm_phase phase);
 
     super.run_phase(phase);
-    fork 
+    fork
 
-
-      forever begin 
-        axi4_master_read_data_analysis_fifo.try_get(t); 
-        `uvm_info("CHECK","ENTERED READ CHECK",UVM_NONE)
-        axi4_master_tx_rresp_count++;
-        axi4_master_tx_rdata_count++;
-        axi4_slave_read_data_analysis_fifo.get(t1);
-        `uvm_info("CHECK","ENTERED READ CHECK",UVM_NONE)
-        axi4_slave_tx_rdata_count++;
-        axi4_slave_tx_rresp_count++;
-        if(flag ==0) begin
-          indextemp = slaveReadAddressQueue.find_first_index() with(item.arid == t1.rid);
-          index = indextemp[0];
-          flag2=0;
-          read_txn_failed = 0; // new read transaction starts at its first beat
-
-          if(masterReadAddressQueue[index].arid == t1.rid) begin 
-            byte_data_cmp_verified_rid_count++;
-          end  
-          axi_master_address_tx = masterReadAddressQueue[index];
-          axi_slave_address_tx = slaveReadAddressQueue[index];
-          tempAddress = axi_master_address_tx.araddr;
-
-          masterReadAddressQueue.delete(index);
-          slaveReadAddressQueue.delete(index);
-          wrapStartAddress =tempAddress - int'(tempAddress % ((2**(axi_master_address_tx.arsize))* (axi_master_address_tx.arlen +1)));
-          wrapEndAddress = wrapStartAddress + (((2**(axi_master_address_tx.arsize))* (axi_master_address_tx.arlen +1)));
-          axi4_read_address_comparision(axi_master_address_tx,axi_slave_address_tx); //address check done 
-          if(axi_master_address_tx.araddr % (2**axi_master_address_tx.arsize) != 0) begin
-            alignAmount = axi_master_address_tx.araddr %((2**(axi_master_address_tx.arsize)));          
-          end
-          flag=1;
-        end
-        else begin 
-          alignAmount =0;
-        end  
-        if(t1.rlast ==1) begin
-          flag=0;
-        end
-        case(axi_master_address_tx.arburst)
-
-          2'b 00: begin 
-            for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin 
-              if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
-                `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH)
-              end    
-
-              referenceFifo.get(readCompare);
-              if(t1.rdata[0][8*j+7-:8] !=readCompare) begin 
-                `uvm_error("READ CHECK FAIL",$sformatf("THE READ DATA DOESNT MATCH when reference DATA  is %0d and actual one is %0d",readCompare,t1.rdata[0]))
-                byte_data_cmp_failed_rdata_count++;
-                read_txn_failed = 1;
-              end
-              else begin 
-                `uvm_info("READ CHECK PASS",$sformatf("THE READ DATA MATCHES  %0d",readCompare),UVM_NONE);
-                byte_data_cmp_verified_rdata_count++;
-              end                   
-            end 
-          end 
-          2'b 01: begin
-            $display("ENTERING HERE SRIJAN");
-            count=0; 
-            for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin     
-              if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin
-                `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH) 
-              end 
-              if(referenceData.exists(tempAddress) ==1) begin
-                j = tempAddress % (DATA_WIDTH/8);
-                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
-                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,referenceData[tempAddress],t1.rdata[0][8*j+7-:8]))
-                  byte_data_cmp_failed_rdata_count++;
-                  read_txn_failed = 1;
-
-                end   
-                else begin 
-                  byte_data_cmp_verified_rdata_count++;
-                  `uvm_info("READ CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d and reference byte is %0h",j,referenceData[tempAddress]),UVM_NONE);
-                end  
-                tempAddress++;
-              end 
-              else begin 
-                if(t1.rresp== READ_SLVERR) begin
-                  byte_data_cmp_verified_rresp_count++;
-
-                end
-                else begin
-                  byte_data_cmp_failed_rresp_count++;
-                end 
-                nonExistantMemRead++;
-                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %0h which doesnt exist so read slaver os %0s",tempAddress,t1.rresp),UVM_NONE)
-                tempAddress++;
-              end
-            end
-          end
-          2'b10:begin    
-            for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin      
-              if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin
-                `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH) 
-              end 
-              if(referenceData.exists(tempAddress) ==1) begin
-                j = tempAddress % (DATA_WIDTH/8);
-
-                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
-                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,readCompare,t1.rdata[0][8*j+7-:8]))
-                  byte_data_cmp_failed_rdata_count++;
-                  read_txn_failed = 1;
-                end   
-                else begin 
-                  byte_data_cmp_verified_rdata_count++;
-                  `uvm_info("READ CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d",j),UVM_NONE);
-                end 
-                tempAddress++;
-              end
-              else begin 
-                nonExistantMemRead++;
-                if(t1.rresp == READ_SLVERR) begin
-                  byte_data_cmp_verified_rresp_count++;
-                end
-                else begin 
-                  byte_data_cmp_failed_rresp_count++;
-                end 
-                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %0h which doesnt exist so read slaver os %0s",tempAddress,t1.rresp),UVM_HIGH)
-                tempAddress++;
-              end 
-              if(tempAddress == wrapEndAddress)
-                tempAddress = wrapStartAddress; 
-            end     
-          end 
-        endcase
-        if(t1.rlast == 1) begin
-          total_read_txn++;
-          if(read_txn_failed) failed_read_txn++;
-          else                passed_read_txn++;
-          `uvm_info(get_type_name(),$sformatf("READ transaction %0s | total_read=%0d pass=%0d fail=%0d",
-            read_txn_failed ? "FAIL" : "PASS", total_read_txn, passed_read_txn, failed_read_txn),UVM_MEDIUM)
-        end
-      end
-
-      forever begin
+       forever begin
         axi4_master_write_response_analysis_fifo.get(temp);
         axi4_master_tx_bresp_count++;
         write_txn_failed = 0;
@@ -622,6 +484,150 @@
         masterArrayDataQueue.delete(index);
         slaveArrayDataQueue.delete(index);
       end
+
+      forever begin 
+        axi4_slave_read_data_analysis_fifo.get(t1);
+        `uvm_info("CHECK","ENTERED READ CHECK",UVM_NONE)
+        $display("RLAST IS %d",t1.rlast);
+        axi4_master_tx_rresp_count++;
+        axi4_master_tx_rdata_count++;
+
+        axi4_slave_tx_rdata_count++;
+        axi4_slave_tx_rresp_count++;
+        if(flag ==0) begin
+          indextemp = slaveReadAddressQueue.find_first_index() with(item.arid == t1.rid);
+          index = indextemp[0];
+          flag2=0;
+          read_txn_failed = 0; // new read transaction starts at its first beat
+
+          if(masterReadAddressQueue[index].arid == t1.rid) begin 
+            byte_data_cmp_verified_rid_count++;
+          end 
+          $display("ADDRESS QUEUE IS %p and index is %d",masterReadAddressQueue,index);
+          axi_master_address_tx = masterReadAddressQueue[index];
+          axi_slave_address_tx = slaveReadAddressQueue[index];
+          tempAddress = axi_master_address_tx.araddr;
+
+          masterReadAddressQueue.delete(index);
+          slaveReadAddressQueue.delete(index);
+          wrapStartAddress =tempAddress - int'(tempAddress % ((2**(axi_master_address_tx.arsize))* (axi_master_address_tx.arlen +1)));
+          wrapEndAddress = wrapStartAddress + (((2**(axi_master_address_tx.arsize))* (axi_master_address_tx.arlen +1)));
+          axi4_read_address_comparision(axi_master_address_tx,axi_slave_address_tx); //address check done 
+          if(axi_master_address_tx.araddr % (2**axi_master_address_tx.arsize) != 0) begin
+            alignAmount = axi_master_address_tx.araddr %((2**(axi_master_address_tx.arsize)));          
+          end
+          flag=1;
+        end
+        else begin 
+          alignAmount =0;
+        end  
+        if(t1.rlast ==1) begin
+          $display("obtained read rlast");
+          flag=0;
+        end
+        $display("BURST TYPE IS %d",axi_master_address_tx.arburst);
+        case(axi_master_address_tx.arburst)
+          2'b 00: begin 
+            for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin 
+              if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
+                `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH)
+              end    
+
+              referenceFifo.get(readCompare);
+              if(t1.rdata[0][8*j+7-:8] !=readCompare) begin 
+                `uvm_error("READ CHECK FAIL",$sformatf("THE READ DATA DOESNT MATCH when reference DATA  is %0d and actual one is %0d",readCompare,t1.rdata[0]))
+                byte_data_cmp_failed_rdata_count++;
+                read_txn_failed = 1;
+              end
+              else begin 
+                `uvm_info("READ CHECK PASS",$sformatf("THE READ DATA MATCHES  %0d",readCompare),UVM_NONE);
+                byte_data_cmp_verified_rdata_count++;
+              end                   
+            end 
+          end 
+          2'b 01: begin
+            count=0; 
+            for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin     
+              if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin
+                `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH) 
+              end 
+              if(referenceData.exists(tempAddress) ==1) begin
+                j = tempAddress % (DATA_WIDTH/8);
+                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
+                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,referenceData[tempAddress],t1.rdata[0][8*j+7-:8]))
+                  byte_data_cmp_failed_rdata_count++;
+                  read_txn_failed = 1;
+
+                end   
+                else begin 
+                  byte_data_cmp_verified_rdata_count++;
+                  `uvm_info("READ CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d and reference byte is %0h",j,referenceData[tempAddress]),UVM_NONE);
+                end  
+                tempAddress++;
+              end 
+              else begin 
+                if(t1.rresp== READ_SLVERR) begin
+                  byte_data_cmp_verified_rresp_count++;
+
+                end
+                else begin
+                  byte_data_cmp_failed_rresp_count++;
+                end 
+                nonExistantMemRead++;
+                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %0h which doesnt exist so read slaver os %0s",tempAddress,t1.rresp),UVM_NONE)
+                tempAddress++;
+              end
+            end
+          end
+          2'b10:begin    
+            for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin      
+              if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin
+                `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH) 
+              end 
+              if(referenceData.exists(tempAddress) ==1) begin
+                j = tempAddress % (DATA_WIDTH/8);
+
+                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
+                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,readCompare,t1.rdata[0][8*j+7-:8]))
+                  byte_data_cmp_failed_rdata_count++;
+                  read_txn_failed = 1;
+                end   
+                else begin 
+                  byte_data_cmp_verified_rdata_count++;
+                  `uvm_info("READ CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d",j),UVM_NONE);
+                end 
+                tempAddress++;
+              end
+              else begin 
+                nonExistantMemRead++;
+                if(t1.rresp == READ_SLVERR) begin
+                  byte_data_cmp_verified_rresp_count++;
+                end
+                else begin 
+                  byte_data_cmp_failed_rresp_count++;
+                end 
+                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %0h which doesnt exist so read slaver os %0s",tempAddress,t1.rresp),UVM_HIGH)
+                tempAddress++;
+              end 
+              if(tempAddress == wrapEndAddress)
+                tempAddress = wrapStartAddress; 
+            end     
+          end 
+        endcase
+        $display("CHECK DONE");
+        if(t1.rlast == 1) begin
+          total_read_txn++;
+          if(read_txn_failed) 
+            failed_read_txn++;
+          else                
+            passed_read_txn++;
+
+          read_txn_failed =0;
+          `uvm_info(get_type_name(),$sformatf("READ transaction %0s | total_read=%0d pass=%0d fail=%0d",
+            read_txn_failed ? "FAIL" : "PASS", total_read_txn, passed_read_txn, failed_read_txn),UVM_MEDIUM)
+        end
+      end
+
 
     join_none
 

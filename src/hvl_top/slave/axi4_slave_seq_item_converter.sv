@@ -280,7 +280,7 @@ function void axi4_slave_seq_item_converter::to_read_class( input axi4_read_tran
 
 
  output_conv_h.rlast = input_conv_h.rlast; 
-
+ $display("CLONED RLAST IS %d",output_conv_h.rlast);
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("----------------------------------------------------------------------"),UVM_FULL);
 endfunction : to_read_class
 
