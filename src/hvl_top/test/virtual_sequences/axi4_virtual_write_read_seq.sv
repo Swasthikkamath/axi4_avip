@@ -70,6 +70,7 @@ task axi4_virtual_write_read_seq::body();
 
   wait(axi4_master_write_seq_h.transCount == (MASTER_TRANSACTION_WRITE_ISSUE_COUNT+MASTER_TRANSACTION_READ_ISSUE_COUNT));
 
+  $display("I AM COMING OUT");
   
  endtask : body
 
