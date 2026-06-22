@@ -22,48 +22,16 @@ package axi4_test_pkg;
 
   //including base_test for testing
   `include "axi4_base_test.sv"
-  `include "axi4_non_outstanding_8b_write_data_test.sv"
-  `include "axi4_non_outstanding_16b_write_data_test.sv"
-  `include "axi4_non_outstanding_32b_write_data_test.sv"
-  `include "axi4_non_outstanding_64b_write_data_test.sv"
-  `include "axi4_non_outstanding_incr_burst_write_test.sv"
-  `include "axi4_non_outstanding_wrap_burst_write_test.sv"
-  `include "axi4_outstanding_8b_write_data_test.sv"
-  `include "axi4_outstanding_16b_write_data_test.sv"
-  `include "axi4_outstanding_32b_write_data_test.sv"
-  `include "axi4_outstanding_64b_write_data_test.sv"
-  `include "axi4_outstanding_incr_burst_write_test.sv"
-  `include "axi4_outstanding_wrap_burst_write_test.sv"
-  `include "axi4_non_outstanding_incr_burst_read_test.sv"
-  `include "axi4_non_outstanding_wrap_burst_read_test.sv"
-  `include "axi4_non_outstanding_8b_data_read_test.sv"
-  `include "axi4_non_outstanding_16b_data_read_test.sv"
-  `include "axi4_non_outstanding_32b_data_read_test.sv"
-  `include "axi4_non_outstanding_64b_data_read_test.sv"
-  `include "axi4_non_outstanding_64b_data_read_test.sv"
-  `include "axi4_outstanding_incr_burst_read_test.sv"
-  `include "axi4_outstanding_wrap_burst_read_test.sv"
-  `include "axi4_outstanding_8b_data_read_test.sv"
-  `include "axi4_outstanding_16b_data_read_test.sv"
-  `include "axi4_outstanding_32b_data_read_test.sv"
-  `include "axi4_outstanding_64b_data_read_test.sv"
-  
-  `include "axi4_non_outstanding_8b_write_read_test.sv"
-  `include "axi4_non_outstanding_16b_write_read_test.sv"
-  `include "axi4_non_outstanding_32b_write_read_test.sv"
-  `include "axi4_non_outstanding_64b_write_read_test.sv"
-  `include "axi4_non_outstanding_fixed_burst_write_read_test.sv"
-  
-  `include "axi4_outstanding_8b_write_read_test.sv"
-  `include "axi4_outstanding_16b_write_read_test.sv"
-  `include "axi4_outstanding_32b_write_read_test.sv"
-  `include "axi4_outstanding_64b_write_read_test.sv"
-  `include "axi4_non_outstanding_incr_burst_write_read_test.sv"
-  `include "axi4_outstanding_incr_burst_write_read_test.sv"
-  `include "axi4_non_outstanding_wrap_burst_write_read_test.sv"
-  `include "axi4_outstanding_wrap_burst_write_read_test.sv"
-  `include "axi4_outstanding_fixed_burst_write_read_test.sv"
 
+  //-------------------------------------------------------
+  // Slave tests (standalone master RTL)
+  //-------------------------------------------------------
+  `include "axi4_non_outstanding_slave_write_test.sv"
+  `include "axi4_outstanding_slave_write_test.sv"
+  `include "axi4_non_outstanding_slave_read_test.sv"
+  `include "axi4_outstanding_slave_read_test.sv"
+  `include "axi4_non_outstanding_slave_write_read_test.sv"
+  `include "axi4_outstanding_slave_write_read_test.sv"
 
 endpackage : axi4_test_pkg
 

@@ -89,17 +89,17 @@ task axi4_slave_base_seq::body();
          req = axi4_slave_tx::type_id::create("req");
 
          start_item(req);
-         if(!req.randomize() with { req.transfer_type == writeTransferType;;}) begin
+         if(!req.randomize() with { req.transfer_type == readTransferType;}) begin
             `uvm_fatal(get_type_name(), $sformatf("Randomization failed for READ axi4_slave_tx (type=%s)",readTransferType.name()))
          end
 
          finish_item(req);
 
-         readIdQueue[writeCnt] = req.get_transaction_id();
+         readIdQueue[readCnt] = req.get_transaction_id();
 
          fork
-           begin 
-             int id = readIdQueue[writeCnt++];
+           begin
+             int id = readIdQueue[readCnt++];
              get_response(rsp,id);
              numReadGotResp++;
            end 
@@ -111,7 +111,6 @@ task axi4_slave_base_seq::body();
 
   `uvm_info(get_type_name(), $sformatf("Randomized transaction:\n%s", req.sprint()), UVM_HIGH)
 
-  finish_item(req);
   `uvm_info(get_type_name(), $sformatf("%s transaction sent to driver", writeOrRead.name()), UVM_MEDIUM)
 
 endtask : body  
