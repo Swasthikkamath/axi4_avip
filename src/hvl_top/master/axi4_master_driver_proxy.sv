@@ -532,7 +532,7 @@ struct_read_data_packet),UVM_MEDIUM);
           axi_read_seq_item_port.put_response(rsp_rd);
           
           //Converting transactions into struct data type
-          axi4_master_seq_item_converter::to_read_class(struct_read_data_packet,req_rd);
+          axi4_master_seq_item_converter::to_read_class(struct_read_data_packet,local_master_read_data_tx);
 
           `uvm_info(get_type_name(),$sformatf("READ_DATA_THREAD::Response_received_req_read_packet = \n %s",req_rd.sprint()),UVM_MEDIUM);
         end

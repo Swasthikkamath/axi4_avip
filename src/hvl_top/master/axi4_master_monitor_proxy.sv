@@ -146,6 +146,9 @@ task axi4_master_monitor_proxy::axi4_write_address();
     axi4_write_transfer_char_s struct_write_packet;
     axi4_transfer_cfg_s        struct_cfg;
     axi4_master_tx             req_wr_clone_packet;
+    axi4_master_tx  req_wr;
+
+    req_wr = axi4_master_tx :: type_id :: create("tx");
 
     axi4_master_cfg_converter::from_class(axi4_master_agent_cfg_h, struct_cfg);
     axi4_master_mon_bfm_h.axi4_write_address_sampling(struct_write_packet,struct_cfg);
@@ -172,7 +175,11 @@ task axi4_master_monitor_proxy::axi4_write_data();
     axi4_transfer_cfg_s        struct_cfg;
     axi4_master_tx             req_wr_clone_packet;
     axi4_master_tx             local_write_addr_packet;
-    
+    axi4_master_tx  req_wr;
+
+    req_wr = axi4_master_tx :: type_id :: create("tx");
+
+ 
     axi4_master_cfg_converter::from_class(axi4_master_agent_cfg_h, struct_cfg);
     axi4_master_mon_bfm_h.axi4_write_data_sampling(struct_write_packet,struct_cfg);
    axi4_master_seq_item_converter::to_write_class(struct_write_packet,req_wr);
@@ -203,6 +210,10 @@ task axi4_master_monitor_proxy::axi4_write_response();
     axi4_transfer_cfg_s        struct_cfg;
     axi4_master_tx             master_tx_clone_packet;
     axi4_master_tx             local_write_addr_data_packet;
+    axi4_master_tx  req_wr;
+
+    req_wr = axi4_master_tx :: type_id :: create("tx");
+
 
     axi4_master_cfg_converter::from_class(axi4_master_agent_cfg_h, struct_cfg);
     axi4_master_mon_bfm_h.axi4_write_response_sampling(struct_write_packet,struct_cfg);
@@ -232,6 +243,11 @@ task axi4_master_monitor_proxy::axi4_read_address();
     axi4_read_transfer_char_s struct_read_packet;
     axi4_transfer_cfg_s        struct_cfg;
     axi4_master_tx             req_rd_clone_packet;
+    
+    axi4_master_tx  req_rd;
+
+    req_rd = axi4_master_tx :: type_id :: create("tx");
+
 
     axi4_master_cfg_converter::from_class(axi4_master_agent_cfg_h, struct_cfg);
     axi4_master_mon_bfm_h.axi4_read_address_sampling(struct_read_packet,struct_cfg);
@@ -256,6 +272,11 @@ task axi4_master_monitor_proxy::axi4_read_data();
     axi4_transfer_cfg_s       struct_cfg;
     axi4_master_tx            req_rd_clone_packet; 
     axi4_master_tx            local_read_addr_packet;
+    axi4_master_tx  req_rd;
+
+    req_rd = axi4_master_tx :: type_id :: create("tx");
+
+
 
     axi4_master_cfg_converter::from_class(axi4_master_agent_cfg_h, struct_cfg);
     axi4_master_mon_bfm_h.axi4_read_data_sampling(struct_read_packet,struct_cfg);
