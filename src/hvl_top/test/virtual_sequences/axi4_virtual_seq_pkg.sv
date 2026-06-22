@@ -22,10 +22,9 @@ package axi4_virtual_seq_pkg;
   // Importing the required packages
   //-------------------------------------------------------
   `include "axi4_virtual_base_seq.sv"
-  `include "axi4_virtual_write_followed_by_read_seq.sv"
-  `include "axi4_virtual_write_seq.sv"
-  `include "axi4_virtual_read_seq.sv"
-  `include "axi4_virtual_write_read_seq.sv"
+  `include "axi4_virtual_slave_write.sv"
+  `include "axi4_virtual_slave_read.sv"
+  `include "axi4_virtual_slave_write_read.sv"
 
 endpackage : axi4_virtual_seq_pkg
 

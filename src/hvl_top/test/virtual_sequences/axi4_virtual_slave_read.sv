@@ -41,15 +41,9 @@ task axi4_virtual_slave_read::body();
 
   axi4_slave_read_seq_h.readTransferType = readTransferType;
   axi4_slave_read_seq_h.readOrRead  = READ;
-  `uvm_info(get_type_name(), $sformatf("Starting READ virtual sequence | size=%s burst=%s type=%s",
-            readTranSize.name(), readBurstType.name(), readTransferType.name()), UVM_LOW)
-  fork
-    begin: T1_READ
-      repeat(MASTER_TRANSACTION_READ_ISSUE_COUNT) begin
-        axi4_slave_read_seq_h.start(p_sequencer.axi4_slave_read_seqr_h);
-      end
-    end
-  join
+  `uvm_info(get_type_name(), $sformatf("Starting READ virtual sequence | size=%s burst=%s type=%s",readTranSize.name(), readBurstType.name(), readTransferType.name()), UVM_LOW)
+        
+  axi4_slave_read_seq_h.start(p_sequencer.axi4_slave_read_seqr_h);
   
  endtask : body
 

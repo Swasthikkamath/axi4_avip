@@ -106,9 +106,7 @@ task axi4_slave_base_seq::body();
          join_none 
       end
 
-      wait(numReadGotResp == MASTER_TRANSACTION_WRITE_ISSUE_COUNT);  
-
-
+      wait(numReadGotResp == MASTER_TRANSACTION_READ_ISSUE_COUNT); 
   end
 
   `uvm_info(get_type_name(), $sformatf("Randomized transaction:\n%s", req.sprint()), UVM_HIGH)
@@ -116,7 +114,7 @@ task axi4_slave_base_seq::body();
   finish_item(req);
   `uvm_info(get_type_name(), $sformatf("%s transaction sent to driver", writeOrRead.name()), UVM_MEDIUM)
 
-endtask : body
+endtask : body  
 
 
 `endif
