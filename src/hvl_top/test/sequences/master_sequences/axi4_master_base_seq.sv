@@ -24,9 +24,9 @@ class axi4_master_base_seq extends uvm_sequence #(axi4_master_tx);
   
   arburst_e readBurstType;
   
+  static int transCount;
 
-
-
+  int id;
   //-------------------------------------------------------
   // Externally defined Function
   //-------------------------------------------------------
@@ -80,7 +80,19 @@ task axi4_master_base_seq::body();
   `uvm_info(get_type_name(), $sformatf("Randomized transaction:\n%s", req.sprint()), UVM_HIGH)
 
   finish_item(req);
+
+  id = req.get_transaction_id();
+
+  fork
+    begin 
+      get_response(rsp,id); 
+      transCount++;
+    end 
+  join_none;
+
   `uvm_info(get_type_name(), $sformatf("%s transaction sent to driver", writeOrRead.name()), UVM_MEDIUM)
+  
+  
 
 endtask : body
 

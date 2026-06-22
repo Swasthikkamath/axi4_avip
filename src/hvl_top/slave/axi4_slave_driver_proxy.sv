@@ -467,7 +467,7 @@
           task_memory_read(local_slave_raddr_tx,struct_read_packet);
            rsp_rd = RSP :: type_id :: create("RSP OBJECT"); 
           rsp_rd.set_id_info(local_slave_rdata_tx);
-          axi_write_seq_item_port.put_response(rsp_rd); 
+          axi_read_seq_item_port.put_response(rsp_rd); 
           readFlag =1;
           waitStates--;     
           //Putting back the key

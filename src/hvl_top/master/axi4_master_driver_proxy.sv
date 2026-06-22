@@ -207,7 +207,9 @@ task axi4_master_driver_proxy::axi4_write_task();
       axi4_master_drv_bfm_h.axi4_write_address_channel_task(struct_write_packet,struct_cfg);
       axi4_master_drv_bfm_h.axi4_write_data_channel_task(struct_write_packet,struct_cfg);
       axi4_master_drv_bfm_h.axi4_write_response_channel_task(struct_write_packet,struct_cfg);
-
+      rsp_wr = RSP :: type_id :: create("RSP OBJECT"); 
+      rsp_wr.set_id_info(req_wr);
+      axi_write_seq_item_port.put_response(rsp_wr); 
       //Converts the struct packet to req packet
       axi4_master_seq_item_converter::to_write_class(struct_write_packet,local_master_write_tx);
       `uvm_info(get_type_name(),$sformatf("WRITE_TASK::Response Received_req_write_packet = \n %s",
@@ -366,6 +368,11 @@ task axi4_master_driver_proxy::axi4_write_task();
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Received_req_write_packet = \n %s",local_master_response_tx.sprint()),UVM_MEDIUM);
 
           axi4_master_seq_item_converter::to_write_class(struct_write_response_packet,local_master_response_tx);
+
+           rsp_wr = RSP :: type_id :: create("RSP OBJECT"); 
+           rsp_wr.set_id_info(local_master_response_tx);
+           axi_write_seq_item_port.put_response(rsp_wr); 
+
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Received_req_write_packet = \n %s",local_master_response_tx.sprint()),UVM_MEDIUM);
 
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Checking fifo size used= %0d",axi4_master_write_resp_fifo_h.used()),UVM_FULL); 
@@ -432,6 +439,10 @@ task axi4_master_driver_proxy::axi4_read_task();
       axi4_master_drv_bfm_h.axi4_read_data_channel_task(struct_read_packet,struct_cfg);
       //Converting transactions into struct data type
       axi4_master_seq_item_converter::to_read_class(struct_read_packet,req_rd);
+
+      rsp_rd = RSP :: type_id :: create("RSP OBJECT"); 
+      rsp_rd.set_id_info(req_rd);
+      axi_read_seq_item_port.put_response(rsp_rd); 
 
       `uvm_info(get_type_name(),$sformatf("READ_TASK::Response_received_req_read_packet = \n %s",req_rd.sprint()),UVM_MEDIUM);
     end
@@ -515,6 +526,10 @@ struct_read_data_packet),UVM_MEDIUM);
           //Getting the key from the write_response_channel so that 
           //the other transaction should start after completion of the previous transaction
           read_channel_key.put(1);
+
+          rsp_rd = RSP :: type_id :: create("RSP OBJECT");  
+          rsp_rd.set_id_info(local_master_read_data_tx);
+          axi_read_seq_item_port.put_response(rsp_rd);
           
           //Converting transactions into struct data type
           axi4_master_seq_item_converter::to_read_class(struct_read_data_packet,req_rd);

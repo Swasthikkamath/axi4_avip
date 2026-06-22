@@ -45,11 +45,13 @@ task axi4_virtual_write_seq::body();
             writeTranSize.name(), writeBurstType.name(), writeTransferType.name()), UVM_LOW)
   fork
     begin: T1_WRITE
-      repeat(5) begin
+      repeat(MASTER_TRANSACTION_WRITE_ISSUE_COUNT) begin
         axi4_master_write_seq_h.start(p_sequencer.axi4_master_write_seqr_h);
       end
     end
   join
+
+  wait(axi4_master_write_seq_h.transCount == MASTER_TRANSACTION_WRITE_ISSUE_COUNT);
  endtask : body
 
 `endif

@@ -45,11 +45,12 @@ task axi4_virtual_read_seq::body();
             readTranSize.name(), readBurstType.name(), readTransferType.name()), UVM_LOW)
   fork
     begin: T1_READ
-      repeat(5) begin
+      repeat(MASTER_TRANSACTION_READ_ISSUE_COUNT) begin
         axi4_master_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
       end
     end
   join
+  wait(axi4_master_read_seq_h.transCount == MASTER_TRANSACTION_READ_ISSUE_COUNT);
  endtask : body
 
 `endif
