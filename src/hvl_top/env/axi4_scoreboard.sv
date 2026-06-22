@@ -163,27 +163,17 @@
     int byte_data_cmp_failed_ruser_count;
 
     int index1,index2;
-    bit flag;
     semaphore write_address_key;
     semaphore write_data_key;
     semaphore write_response_key;
     semaphore read_address_key;
     semaphore read_data_key;
 
-    int indextemp[$];
-    int index;
-
-    int alignAmount;
     axi4_master_tx t;
     axi4_master_tx temp;
     axi4_slave_tx t1;
     axi4_slave_tx t2;
-    int tempAddress;
     logic[7:0] readCompare;
-    int wrapStartAddress;
-    int wrapEndAddress;
-    axi4_master_tx axi_master_address_tx;
-    axi4_slave_tx axi_slave_address_tx;
     rresp_e readError;
     bit slave_err;
     int count;
@@ -370,6 +360,16 @@
     super.run_phase(phase);
     fork
 
+      begin : write_check
+        // Thread-local scratch state. These were previously class members
+        // shared with the read-check thread, which corrupted each other
+        // (e.g. the read burst type read as 0 after a write completed).
+        int index;
+        int indextemp[$];
+        int tempAddress, alignAmount;
+        int wrapStartAddress, wrapEndAddress;
+        axi4_master_tx axi_master_address_tx;
+        axi4_slave_tx  axi_slave_address_tx;
        forever begin
         axi4_master_write_response_analysis_fifo.get(temp);
         axi4_master_tx_bresp_count++;
@@ -484,8 +484,21 @@
         masterArrayDataQueue.delete(index);
         slaveArrayDataQueue.delete(index);
       end
+      end : write_check
 
-      forever begin 
+      begin : read_check
+        // Thread-local scratch state, independent of the write-check thread.
+        // 'flag', 'axi_master_address_tx', 'tempAddress', 'alignAmount' and the
+        // wrap bounds must persist across beats of a burst but stay private to
+        // this thread so the write loop can no longer clobber arburst etc.
+        int index;
+        int indextemp[$];
+        int tempAddress, alignAmount;
+        int wrapStartAddress, wrapEndAddress;
+        bit flag;
+        axi4_master_tx axi_master_address_tx;
+        axi4_slave_tx  axi_slave_address_tx;
+      forever begin
         axi4_slave_read_data_analysis_fifo.get(t1);
         `uvm_info("CHECK","ENTERED READ CHECK",UVM_NONE)
         $display("RLAST IS %d",t1.rlast);
@@ -627,6 +640,7 @@
             read_txn_failed ? "FAIL" : "PASS", total_read_txn, passed_read_txn, failed_read_txn),UVM_MEDIUM)
         end
       end
+      end : read_check
 
 
     join_none
