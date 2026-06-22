@@ -1,5 +1,5 @@
-`ifndef AXI4_OUTSTANDING_32B_INCR_READ_DATA_TEST_INCLUDED_
-`define AXI4_OUTSTANDING_32B_INCR_WRITE_DATA_TEST_INCLUDED_
+`ifndef AXI4_OUTSTANDING_WRAP_BURST_READ_TEST_INCLUDED_
+`define AXI4_OUTSTANDING_WRAP_BURST_READ_TEST_INCLUDED_
 
 //--------------------------------------------------------------------------------------------
 // Class: axi4_outstanding_wrap_burst_read_test

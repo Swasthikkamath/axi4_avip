@@ -1,5 +1,5 @@
-`ifndef AXI4_VIRTUAL_32B_ORDERED_WRITE_READ_SEQ_INCLUDED_
-`define AXI4_VIRTUAL_32B_ORDERED_WRITE_READ_SEQ_INCLUDED_
+`ifndef AXI4_VIRTUAL_WRITE_FOLLOWED_BY_READ_SEQ_INCLUDED_
+`define AXI4_VIRTUAL_WRITE_FOLLOWED_BY_READ_SEQ_INCLUDED_
 
 //--------------------------------------------------------------------------------------------
 // Class: axi4_virtual_write_followed_by_read_seq
