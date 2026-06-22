@@ -1,5 +1,5 @@
-`ifndef AXI4_VIRTUAL_SLAVE_READ_SEQ_INCLUDED_
-`define AXI4_VIRTUAL_SLAVE_READ_SEQ_INCLUDED_
+`ifndef AXI4_VIRTUAL_SLAVE_READ_INCLUDED_
+`define AXI4_VIRTUAL_SLAVE_READ_INCLUDED_
 
 //--------------------------------------------------------------------------------------------
 // Class: axi4_virtual__slave_read

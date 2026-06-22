@@ -1,5 +1,5 @@
-`ifndef AXI4_MASTER_BASE_SEQ_INCLUDED_
-`define AXI4_MASTER_BASE_SEQ_INCLUDED_
+`ifndef AXI4_SLAVE_BASE_SEQ_INCLUDED_
+`define AXI4_SLAVE_BASE_SEQ_INCLUDED_
 
 //--------------------------------------------------------------------------------------------
 // Class: axi4_slave_base_seq 
