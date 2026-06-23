@@ -95,7 +95,7 @@ interface axi4_master_driver_bfm(input bit                      aclk,
     @(negedge aresetn);
     `uvm_info(name,$sformatf("SYSTEM RESET DETECTED"),UVM_HIGH)
 
-    default_values();
+    //default_values();
  
     @(posedge aresetn);
     `uvm_info(name,$sformatf("SYSTEM RESET DEACTIVATED"),UVM_HIGH)

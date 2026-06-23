@@ -31,15 +31,15 @@ class axi4_master_driver_proxy extends uvm_driver#(axi4_master_tx);
 
   //Variable: axi4_master_write_fifo_h
   //Declaring handle for uvm_tlm_analysis_fifo for write task
-  uvm_tlm_analysis_fifo #(axi4_master_tx) axi4_master_write_fifo_h;
+  uvm_tlm_fifo #(axi4_master_tx) axi4_master_write_fifo_h;
 
   //Variable: axi4_master_write_resp_fifo_h
   //Declaring handle for uvm_tlm_analysis_fifo for write task
-  uvm_tlm_analysis_fifo #(axi4_master_tx) axi4_master_write_resp_fifo_h;
+  uvm_tlm_fifo #(axi4_master_tx) axi4_master_write_resp_fifo_h;
   
   //Variable: axi4_master_read_fifo_h
   //Declaring handle for uvm_tlm_analysis_fifo for read task
-  uvm_tlm_analysis_fifo #(axi4_master_tx) axi4_master_read_fifo_h;
+  uvm_tlm_fifo #(axi4_master_tx) axi4_master_read_fifo_h;
 
   //Variable: req_wr, req_rd
   //Declaration of REQ handles
@@ -119,9 +119,9 @@ function axi4_master_driver_proxy::new(string name = "axi4_master_driver_proxy",
   axi_read_seq_item_port     = new("axi_read_seq_item_port",this);
   axi_write_rsp_port         = new("axi_write_rsp_port",this);
   axi_read_rsp_port          = new("axi_read_rsp_port",this);
-  axi4_master_write_fifo_h   = new("axi4_master_write_fifo_h",this);
-  axi4_master_write_resp_fifo_h   = new("axi4_master_write_resp_fifo_h",this);
-  axi4_master_read_fifo_h    = new("axi4_master_read_fifo_h",this);
+  axi4_master_write_fifo_h   = new("axi4_master_write_fifo_h",this,16);
+  axi4_master_write_resp_fifo_h   = new("axi4_master_write_resp_fifo_h",this,16);
+  axi4_master_read_fifo_h    = new("axi4_master_read_fifo_h",this,16);
   read_channel_key           = new(1);
   write_data_channel_key     = new(1);
   write_response_channel_key = new(1);
@@ -207,9 +207,11 @@ task axi4_master_driver_proxy::axi4_write_task();
       axi4_master_drv_bfm_h.axi4_write_address_channel_task(struct_write_packet,struct_cfg);
       axi4_master_drv_bfm_h.axi4_write_data_channel_task(struct_write_packet,struct_cfg);
       axi4_master_drv_bfm_h.axi4_write_response_channel_task(struct_write_packet,struct_cfg);
-
+      rsp_wr = RSP :: type_id :: create("RSP OBJECT"); 
+      rsp_wr.set_id_info(req_wr);
+      axi_write_seq_item_port.put_response(rsp_wr); 
       //Converts the struct packet to req packet
-      axi4_master_seq_item_converter::to_write_class(struct_write_packet,local_master_write_tx);
+      axi4_master_seq_item_converter::to_write_class(struct_write_packet,req_wr);
       `uvm_info(get_type_name(),$sformatf("WRITE_TASK::Response Received_req_write_packet = \n %s",
                                            local_master_write_tx.sprint()),UVM_MEDIUM);
     end
@@ -238,14 +240,14 @@ task axi4_master_driver_proxy::axi4_write_task();
       //This fifo is used if the transfer_type is NON_OUTSTANDING_WRITE
       //Throws the error if the write fifo reaches the limit
       if(!axi4_master_write_fifo_h.is_full()) begin
-        axi4_master_write_fifo_h.write(req_wr);
+        axi4_master_write_fifo_h.put(req_wr);
       end
       else begin
         `uvm_error(get_type_name(),$sformatf("WRITE_TASK::Cannot write into FIFO as WRITE_FIFO IS FULL"));
       end
 
       if(!axi4_master_write_resp_fifo_h.is_full()) begin
-        axi4_master_write_resp_fifo_h.write(req_wr);
+        axi4_master_write_resp_fifo_h.put(req_wr);
       end
       else begin
         `uvm_error(get_type_name(),$sformatf("WRITE_TASK::Cannot write into FIFO as WRITE_RESP_FIFO IS FULL"));
@@ -366,6 +368,12 @@ task axi4_master_driver_proxy::axi4_write_task();
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Received_req_write_packet = \n %s",local_master_response_tx.sprint()),UVM_MEDIUM);
 
           axi4_master_seq_item_converter::to_write_class(struct_write_response_packet,local_master_response_tx);
+ 
+
+           rsp_wr = RSP :: type_id :: create("RSP OBJECT"); 
+           rsp_wr.set_id_info(local_master_response_tx);
+           axi_write_seq_item_port.put_response(local_master_response_tx); 
+           $display("SENDING RESP FROM MASTER for id is %d",local_master_response_tx.get_transaction_id());
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Received_req_write_packet = \n %s",local_master_response_tx.sprint()),UVM_MEDIUM);
 
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Checking fifo size used= %0d",axi4_master_write_resp_fifo_h.used()),UVM_FULL); 
@@ -433,6 +441,10 @@ task axi4_master_driver_proxy::axi4_read_task();
       //Converting transactions into struct data type
       axi4_master_seq_item_converter::to_read_class(struct_read_packet,req_rd);
 
+      rsp_rd = RSP :: type_id :: create("RSP OBJECT"); 
+      rsp_rd.set_id_info(req_rd);
+      axi_read_seq_item_port.put_response(rsp_rd); 
+
       `uvm_info(get_type_name(),$sformatf("READ_TASK::Response_received_req_read_packet = \n %s",req_rd.sprint()),UVM_MEDIUM);
     end
 
@@ -451,7 +463,7 @@ task axi4_master_driver_proxy::axi4_read_task();
       //This fifo is used if the transfer_type is OUTSTANDING_READ
       //Throws the error when it reaches the limit of the fifo
       if(!axi4_master_read_fifo_h.is_full()) begin
-        axi4_master_read_fifo_h.write(req_rd);
+        axi4_master_read_fifo_h.put(req_rd);
       end
       else begin
         `uvm_error(get_type_name(),$sformatf("READ_TASK::Cannot write into FIFO as READ_FIFO IS FULL"));
@@ -515,9 +527,13 @@ struct_read_data_packet),UVM_MEDIUM);
           //Getting the key from the write_response_channel so that 
           //the other transaction should start after completion of the previous transaction
           read_channel_key.put(1);
+
+          rsp_rd = RSP :: type_id :: create("RSP OBJECT");  
+          rsp_rd.set_id_info(local_master_read_data_tx);
+          axi_read_seq_item_port.put_response(rsp_rd);
           
           //Converting transactions into struct data type
-          axi4_master_seq_item_converter::to_read_class(struct_read_data_packet,req_rd);
+          axi4_master_seq_item_converter::to_read_class(struct_read_data_packet,local_master_read_data_tx);
 
           `uvm_info(get_type_name(),$sformatf("READ_DATA_THREAD::Response_received_req_read_packet = \n %s",req_rd.sprint()),UVM_MEDIUM);
         end

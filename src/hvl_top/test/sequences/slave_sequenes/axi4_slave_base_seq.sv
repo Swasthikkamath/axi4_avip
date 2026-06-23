@@ -1,5 +1,5 @@
 `ifndef AXI4_MASTER_BASE_SEQ_INCLUDED_
-`define AXI4_MASTER_BASE_SEQ_INCLUDED_
+ `define AXI4_MASTER_BASE_SEQ_INCLUDED_
 
 //--------------------------------------------------------------------------------------------
 // Class: axi4_slave_base_seq 
@@ -63,7 +63,7 @@ task axi4_slave_base_seq::body();
          req = axi4_slave_tx::type_id::create("req");
 
          start_item(req);
-         if(!req.randomize() with { req.transfer_type == writeTransferType;;}) begin
+         if(!req.randomize() with { req.transfer_type == writeTransferType;}) begin
             `uvm_fatal(get_type_name(), $sformatf("Randomization failed for WRITE axi4_slave_tx (type=%s)",writeTransferType.name()))
          end
 

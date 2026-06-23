@@ -81,7 +81,7 @@ module hdl_top;
                .aresetn(aresetn));
 
 
- axi_ram slave (
+ axi_master #(.NUM_WR_TXN(MASTER_TRANSACTION_WRITE_ISSUE_COUNT),.NUM_RD_TXN(MASTER_TRANSACTION_READ_ISSUE_COUNT)) master(
     // Global
     .s_axi_aclk    (aclk),
     .s_axi_aresetn    (aresetn),

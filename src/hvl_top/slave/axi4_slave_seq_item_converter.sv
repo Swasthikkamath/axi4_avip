@@ -15,8 +15,8 @@ class axi4_slave_seq_item_converter extends uvm_object;
   extern function new(string name = "axi4_slave_seq_item_converter");
   extern static function void from_write_class(input axi4_slave_tx input_conv_h, output axi4_write_transfer_char_s output_conv);
   extern static function void from_read_class(input axi4_slave_tx input_conv_h, output axi4_read_transfer_char_s output_conv);
-  extern static function void to_write_class(input axi4_write_transfer_char_s input_conv_h, output axi4_slave_tx output_conv_h);
-  extern static function void to_read_class(input axi4_read_transfer_char_s input_conv_h, output axi4_slave_tx output_conv_h);
+  extern static function void to_write_class(input axi4_write_transfer_char_s input_conv_h, inout axi4_slave_tx output_conv_h);
+  extern static function void to_read_class(input axi4_read_transfer_char_s input_conv_h, inout axi4_slave_tx output_conv_h);
   
   extern static function void tx_write_packet(input axi4_slave_tx input_addr_h, input axi4_slave_tx input_data_h,input axi4_slave_tx input_resp_h,output axi4_slave_tx packet_h);
   extern static function void tx_read_packet(input axi4_slave_tx input_addr_h, input axi4_slave_tx input_data_h,output axi4_slave_tx packet_h);
@@ -166,10 +166,9 @@ endfunction : from_read_class
 //--------------------------------------------------------------------------------------------      
 
 
-function void axi4_slave_seq_item_converter::to_write_class(input axi4_write_transfer_char_s input_conv_h, output axi4_slave_tx output_conv_h);
+function void axi4_slave_seq_item_converter::to_write_class(input axi4_write_transfer_char_s input_conv_h, inout axi4_slave_tx output_conv_h);
 
   int i;
-  output_conv_h = new();
 
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("----------------------------------------------------------------------"),UVM_FULL);
   
@@ -230,9 +229,8 @@ endfunction : to_write_class
 // Parameters:                                                                                      
 // name - axi4_slave_tx, axi4_read_transfer_char_s                                                      
 //--------------------------------------------------------------------------------------------      
-function void axi4_slave_seq_item_converter::to_read_class( input axi4_read_transfer_char_s input_conv_h, output axi4_slave_tx output_conv_h);
+function void axi4_slave_seq_item_converter::to_read_class( input axi4_read_transfer_char_s input_conv_h, inout axi4_slave_tx output_conv_h);
  int i;
-  output_conv_h = new();
 
   $cast(output_conv_h.arid,input_conv_h.arid);
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("After randomize arid =  %b",output_conv_h.arid),UVM_FULL);
@@ -280,7 +278,7 @@ function void axi4_slave_seq_item_converter::to_read_class( input axi4_read_tran
 
 
  output_conv_h.rlast = input_conv_h.rlast; 
-
+ $display("CLONED RLAST IS %d",output_conv_h.rlast);
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("----------------------------------------------------------------------"),UVM_FULL);
 endfunction : to_read_class
 

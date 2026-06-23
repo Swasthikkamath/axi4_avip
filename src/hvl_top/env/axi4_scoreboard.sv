@@ -163,27 +163,17 @@
     int byte_data_cmp_failed_ruser_count;
 
     int index1,index2;
-    bit flag;
     semaphore write_address_key;
     semaphore write_data_key;
     semaphore write_response_key;
     semaphore read_address_key;
     semaphore read_data_key;
 
-    int indextemp[$];
-    int index;
-
-    int alignAmount;
     axi4_master_tx t;
     axi4_master_tx temp;
     axi4_slave_tx t1;
     axi4_slave_tx t2;
-    int tempAddress;
     logic[7:0] readCompare;
-    int wrapStartAddress;
-    int wrapEndAddress;
-    axi4_master_tx axi_master_address_tx;
-    axi4_slave_tx axi_slave_address_tx;
     rresp_e readError;
     bit slave_err;
     int count;
@@ -368,14 +358,30 @@
   task axi4_scoreboard::run_phase(uvm_phase phase);
 
     super.run_phase(phase);
-    fork 
-      forever begin
+    fork
+
+      begin : write_check
+        // Thread-local scratch state. These were previously class members
+        // shared with the read-check thread, which corrupted each other
+        // (e.g. the read burst type read as 0 after a write completed).
+        int index;
+        int indextemp[$];
+        int tempAddress, alignAmount;
+        int wrapStartAddress, wrapEndAddress;
+        axi4_master_tx axi_master_address_tx;
+        axi4_slave_tx  axi_slave_address_tx;
+       forever begin
         axi4_master_write_response_analysis_fifo.get(temp);
         axi4_master_tx_bresp_count++;
         write_txn_failed = 0;
         `uvm_info("CHECK","ENTERED FOR WRITE CHECK ",UVM_NONE)
         axi4_slave_write_response_analysis_fifo.get(t2);
         axi4_slave_tx_bresp_count++;
+        $display("scb master address queue is %p slave address queue %p",masterWriteAddressQueue,slaveWriteAddressQueue);
+         $display("REQ ID IS %d",t2.bid);
+         foreach(slaveWriteAddressQueue[i])begin 
+           $display("ID IN QUEUE IS %d",slaveWriteAddressQueue[i].awid);
+         end 
         indextemp = slaveWriteAddressQueue.find_first_index() with(item.awid == t2.bid);
         index =indextemp[0];
         axi_master_address_tx = masterWriteAddressQueue[index];
@@ -483,16 +489,27 @@
         masterArrayDataQueue.delete(index);
         slaveArrayDataQueue.delete(index);
       end
+      end : write_check
 
-
-
-      forever begin 
-        axi4_master_read_data_analysis_fifo.try_get(t); 
-        `uvm_info("CHECK","ENTERED READ CHECK",UVM_NONE)
-        axi4_master_tx_rresp_count++;
-        axi4_master_tx_rdata_count++;
+      begin : read_check
+        // Thread-local scratch state, independent of the write-check thread.
+        // 'flag', 'axi_master_address_tx', 'tempAddress', 'alignAmount' and the
+        // wrap bounds must persist across beats of a burst but stay private to
+        // this thread so the write loop can no longer clobber arburst etc.
+        int index;
+        int indextemp[$];
+        int tempAddress, alignAmount;
+        int wrapStartAddress, wrapEndAddress;
+        bit flag;
+        axi4_master_tx axi_master_address_tx;
+        axi4_slave_tx  axi_slave_address_tx;
+      forever begin
         axi4_slave_read_data_analysis_fifo.get(t1);
         `uvm_info("CHECK","ENTERED READ CHECK",UVM_NONE)
+        $display("RLAST IS %d",t1.rlast);
+        axi4_master_tx_rresp_count++;
+        axi4_master_tx_rdata_count++;
+
         axi4_slave_tx_rdata_count++;
         axi4_slave_tx_rresp_count++;
         if(flag ==0) begin
@@ -503,7 +520,8 @@
 
           if(masterReadAddressQueue[index].arid == t1.rid) begin 
             byte_data_cmp_verified_rid_count++;
-          end  
+          end 
+          $display("ADDRESS QUEUE IS %p and index is %d",masterReadAddressQueue,index);
           axi_master_address_tx = masterReadAddressQueue[index];
           axi_slave_address_tx = slaveReadAddressQueue[index];
           tempAddress = axi_master_address_tx.araddr;
@@ -522,10 +540,11 @@
           alignAmount =0;
         end  
         if(t1.rlast ==1) begin
+          $display("obtained read rlast");
           flag=0;
         end
+        $display("BURST TYPE IS %d",axi_master_address_tx.arburst);
         case(axi_master_address_tx.arburst)
-
           2'b 00: begin 
             for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin 
               if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
@@ -545,7 +564,6 @@
             end 
           end 
           2'b 01: begin
-            $display("ENTERING HERE SRIJAN");
             count=0; 
             for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin     
               if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin
@@ -614,14 +632,22 @@
             end     
           end 
         endcase
+        $display("CHECK DONE");
         if(t1.rlast == 1) begin
           total_read_txn++;
-          if(read_txn_failed) failed_read_txn++;
-          else                passed_read_txn++;
+          if(read_txn_failed) 
+            failed_read_txn++;
+          else                
+            passed_read_txn++;
+
+          read_txn_failed =0;
           `uvm_info(get_type_name(),$sformatf("READ transaction %0s | total_read=%0d pass=%0d fail=%0d",
             read_txn_failed ? "FAIL" : "PASS", total_read_txn, passed_read_txn, failed_read_txn),UVM_MEDIUM)
         end
       end
+      end : read_check
+
+
     join_none
 
   endtask : run_phase

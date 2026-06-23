@@ -52,7 +52,7 @@ module axi_master #(
     output reg  [ADDR_WIDTH-1:0]   s_axi_araddr,
     output reg  [7:0]              s_axi_arlen,
     output reg  [2:0]              s_axi_arsize,
-    output reg  [1:0]              s_axi_arburst,
+    output wire  [1:0]              s_axi_arburst,
     output reg                     s_axi_arlock,
     output reg  [3:0]              s_axi_arcache,
     output reg  [2:0]              s_axi_arprot,
@@ -134,6 +134,7 @@ module axi_master #(
                           lfsr_dat[DATA_WIDTH-1]^lfsr_dat[DATA_WIDTH/2]^
                           lfsr_dat[1]^lfsr_dat[0]};
 
+    assign s_axi_arburst =1;
     // Per-beat write payload (fresh every cycle because lfsr_dat free-runs)
     wire [DATA_WIDTH-1:0] gen_wdata = lfsr_dat;
     wire [STRB_WIDTH-1:0] gen_wstrb = (RANDOM_WSTRB != 0) ? lfsr_dat[STRB_WIDTH-1:0]
@@ -324,7 +325,6 @@ module axi_master #(
             s_axi_araddr   <= {ADDR_WIDTH{1'b0}};
             s_axi_arlen    <= 8'd0;
             s_axi_arsize   <= FULL_SIZE;
-            s_axi_arburst  <= BURST_INCR;
             s_axi_arlock   <= 1'b0;
             s_axi_arcache  <= 4'b0010;
             s_axi_arprot   <= 3'b000;
@@ -367,7 +367,6 @@ module axi_master #(
                         s_axi_araddr  <= gr_addr;
                         s_axi_arlen   <= gr_len;
                         s_axi_arsize  <= FULL_SIZE;
-                        s_axi_arburst <= gr_burst;
                         s_axi_arvalid <= 1'b1;
                         rd_state      <= RD_ADDR;
                     end

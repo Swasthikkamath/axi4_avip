@@ -12,7 +12,7 @@ package axi4_globals_pkg;
   //-------------------------------------------------------
   //Parameter: MASTER_AGENT_ACTIVE
   //Used to set the master agent either active or passive
-  parameter bit MASTER_AGENT_ACTIVE = 1;
+  parameter bit MASTER_AGENT_ACTIVE = 0;
 
   //Parameter: SLAVE_AGENT_ACTIVE
   //Used to set the slave agent either active or passive

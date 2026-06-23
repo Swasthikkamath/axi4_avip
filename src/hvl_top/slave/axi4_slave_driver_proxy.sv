@@ -204,13 +204,13 @@
           axi4_slave_cfg_converter::from_class(axi4_slave_agent_cfg_h,struct_cfg);
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH); 
           axi4_slave_drv_bfm_h.axi4_write_address_phase(struct_write_packet);
-          axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_addr_tx);
+          axi4_slave_seq_item_converter::to_write_class(struct_write_packet,req_wr);
           `uvm_info(get_type_name(), $sformatf("AW accepted | awid=%0d awaddr=0x%0h awlen=%0d awsize=%s awburst=%s",
                     local_slave_addr_tx.awid, local_slave_addr_tx.awaddr, local_slave_addr_tx.awlen,
                     local_slave_addr_tx.awsize.name(), local_slave_addr_tx.awburst.name()), UVM_MEDIUM)
           `uvm_info(get_type_name(), $sformatf("Write address packet:\n%s",local_slave_addr_tx.sprint()), UVM_HIGH)
-          axiSlaveAddressQueue.push_back(local_slave_addr_tx);
-          axiSlaveIdQueue.push_back(local_slave_addr_tx.awid);
+          axiSlaveAddressQueue.push_back(req_wr);
+          axiSlaveIdQueue.push_back(req_wr.awid);
         end:WRITE_ADDRESS_CHANNEL
 
         begin : WRITE_DATA_CHANNEL
@@ -393,14 +393,14 @@
           //read address_task
           axi4_slave_drv_bfm_h.axi4_read_address_phase(struct_read_packet,struct_cfg);
           //Converting struct into transaction data type
-          axi4_slave_seq_item_converter::to_read_class(struct_read_packet,local_slave_tx);
+          axi4_slave_seq_item_converter::to_read_class(struct_read_packet,req_rd);
           `uvm_info("DEBUG_SLAVE_READ_ADDR_PROXY", $sformatf(" to_class_raddr_phase_slave_proxy  \n %p",struct_read_packet), UVM_HIGH);
 
 
           //Putting back the sampled read address data into fifo
-          axi4_slave_read_addr_fifo_h.put(local_slave_tx);
-          axiReadSlaveAddressQueue.push_back(local_slave_tx);
-          axiReadSlaveIdQueue.push_back(local_slave_tx.arid);
+          axi4_slave_read_addr_fifo_h.put(req_rd);
+          axiReadSlaveAddressQueue.push_back(req_rd);
+          axiReadSlaveIdQueue.push_back(req_rd.arid);
           waitStates++; 
           `uvm_info(get_type_name(), $sformatf("AR accepted | arid=%0d araddr=0x%0h arlen=%0d arsize=%s arburst=%s",
                     local_slave_tx.arid, local_slave_tx.araddr, local_slave_tx.arlen,
@@ -467,7 +467,7 @@
           task_memory_read(local_slave_raddr_tx,struct_read_packet);
            rsp_rd = RSP :: type_id :: create("RSP OBJECT"); 
           rsp_rd.set_id_info(local_slave_rdata_tx);
-          axi_write_seq_item_port.put_response(rsp_rd); 
+          axi_read_seq_item_port.put_response(rsp_rd); 
           readFlag =1;
           waitStates--;     
           //Putting back the key
