@@ -210,6 +210,7 @@
                     local_slave_addr_tx.awsize.name(), local_slave_addr_tx.awburst.name()), UVM_MEDIUM)
           `uvm_info(get_type_name(), $sformatf("Write address packet:\n%s",local_slave_addr_tx.sprint()), UVM_HIGH)
           axiSlaveAddressQueue.push_back(req_wr);
+          $display("req wr got awid is %d",req_wr.awid);
           axiSlaveIdQueue.push_back(req_wr.awid);
         end:WRITE_ADDRESS_CHANNEL
 
@@ -225,7 +226,6 @@
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH);
           axi4_slave_drv_bfm_h.axi4_write_data_phase(struct_write_packet,struct_cfg);
           `uvm_info("DEBUG_SLAVE_WDATA_PROXY", $sformatf("AFTER :: Reciving struct pkt from bfm \n%p",struct_write_packet), UVM_HIGH);
-          axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_data_tx);
           `uvm_info(get_type_name(), $sformatf("W data sampled | beats=%0d wlast=%0b",
                     local_slave_data_tx.wdata.size(), local_slave_data_tx.wlast), UVM_MEDIUM)
           `uvm_info(get_type_name(), $sformatf("Write data packet:\n%s", local_slave_data_tx.sprint()), UVM_HIGH)
@@ -284,6 +284,7 @@
             axiSlaveAddressQueue.delete(indexTracker[0]);
             local_slave_data_tx = axiSlaveDataQueue[indexTracker[0]];
             axiSlaveDataQueue.delete(indexTracker[0]);
+            $display("slave driver sent out bid %d",local_slave_addr_tx.awid);
             bid_local = local_slave_addr_tx.awid;
             if(local_slave_addr_tx.awburst == WRITE_FIXED) begin 
               end_wrap_addr =  local_slave_addr_tx.awaddr + ((2**local_slave_addr_tx.awsize));
@@ -305,6 +306,7 @@
           else begin
             local_slave_addr_tx = axiSlaveAddressQueue.pop_front();
             local_slave_data_tx = axiSlaveDataQueue.pop_front();
+            $display("slave driver sent out bid %d",local_slave_addr_tx.awid);
             bid_local = local_slave_addr_tx.awid;
             if(local_slave_addr_tx.awburst == WRITE_FIXED) begin
               end_wrap_addr =  local_slave_addr_tx.awaddr + ((2**local_slave_addr_tx.awsize));

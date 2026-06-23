@@ -286,7 +286,7 @@
     axi4_master_write_response_analysis_fifo= new("axi4_master_write_response_analysis_fifo",this);
     axi4_master_read_address_analysis_fifo = new("axi4_master_read_address_analysis_fifo",this);
     axi4_master_read_data_analysis_fifo = new("axi4_master_read_data_analysis_fifo",this);
-    referenceFifo = new("refrenceFifo",this);
+    referenceFifo = new("refrenceFifo",this,16000);
     axi4_slave_write_address_analysis_fifo = new("axi4_slave_write_address_analysis_fifo",this);
     axi4_slave_write_data_analysis_fifo = new("axi4_slave_write_data_analysis_fifo",this);
     axi4_slave_write_response_analysis_fifo= new("axi4_slave_write_response_analysis_fifo",this);
@@ -397,6 +397,7 @@
         if((axi_master_address_tx.awaddr % (2**axi_master_address_tx.awsize))!= 0) begin
           alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))*(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
         end
+         $display("size len of write is %d",masterArrayDataQueue[index].size());
         for(int i=0;i < masterArrayDataQueue[index].size();i++) begin    
           int count =0; 
           int j=0;
@@ -480,6 +481,7 @@
             end 
           endcase   
         end
+        $display("WRITE CHECK DONE");
         total_write_txn++;
         if(write_txn_failed) failed_write_txn++;
         else                 passed_write_txn++;
