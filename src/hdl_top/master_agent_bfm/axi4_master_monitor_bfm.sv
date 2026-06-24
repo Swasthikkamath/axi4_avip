@@ -155,6 +155,7 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
     do begin
       @(masterMonCb);
     end while((masterMonCb.bvalid!==1 || masterMonCb.bready!==1));
+    @(masterMonCb);
     req.bid      = masterMonCb.bid;
     req.bresp    = masterMonCb.bresp;
     `uvm_info("FROM MASTER MON BFM::WRITE RESPONSE",$sformatf("WRITE RESPONSE PACKET: \n %p",req),UVM_FULL)

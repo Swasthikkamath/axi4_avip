@@ -3,7 +3,8 @@ module axi_ram #(
     parameter ADDR_WIDTH = 12,
     parameter ID_WIDTH   = 4,
     parameter MEM_DEPTH  = 1024,
-    parameter FIFO_DEPTH = 64
+    parameter FIFO_DEPTH = 6400,
+    parameter AR_READY_DELAY = 5      // cycles to wait after arvalid before arready
 )(
     input  wire                     s_axi_aclk,
     input  wire                     s_axi_aresetn,
@@ -107,24 +108,33 @@ module axi_ram #(
         begin c = 0; for (i = 0; i < STRB_WIDTH; i = i + 1) c = c + strb[i]; strb_count_f = c; end
     endfunction
 
-    task fifo_assemble;                 // peek a read beat from committed FIFO
+    // Peek a read beat. When fwd_en=1 (a FIFO commit is happening this cycle),
+    // the bytes being committed are forwarded straight from the staging buffer,
+    // since they are not yet visible in fifo_mem on this clock edge.
+    task fifo_assemble;
         input  [ADDR_WIDTH-1:0]  addr;
         input  [2:0]             size;
+        input                    fwd_en;
         output [DATA_WIDTH-1:0]  data_o;
         output                   underflow_o;
-        integer s, off, lane, k, need;
+        integer s, off, lane, k, need, space, cbytes, avail;
         reg [STRB_WIDTH-1:0] mask;
         begin
+            space  = FIFO_DEPTH - fifo_count;
+            cbytes = fwd_en ? ((stg_store <= space) ? stg_store : space) : 0; // committed this cycle
+            avail  = fifo_count + cbytes;                                      // forwardable bytes
             s = (1 << size); off = addr % STRB_WIDTH; mask = 0; need = 0;
             for (lane = 0; lane < STRB_WIDTH; lane = lane + 1)
                 if (lane >= off && lane < off + s) begin mask[lane] = 1'b1; need = need + 1; end
-            underflow_o = (need > fifo_count);
+            underflow_o = (need > avail);
             data_o = {DATA_WIDTH{1'b0}};
             k = 0;
             for (lane = 0; lane < STRB_WIDTH; lane = lane + 1) begin
                 if (mask[lane]) begin
                     if (k < fifo_count)
                         data_o[lane*8 +: 8] = fifo_mem[(fifo_rd_ptr + k) % FIFO_DEPTH];
+                    else if (k < avail)
+                        data_o[lane*8 +: 8] = stg_mem[k - fifo_count];   // forwarded byte
                     k = k + 1;
                 end
             end
@@ -143,6 +153,7 @@ module axi_ram #(
     reg [1:0]            wr_burst;
     reg [2:0]            wr_size;
     reg [ADDR_WIDTH-1:0] wr_wrap_mask;
+    reg                  wr_inflight;   // write accepted, B handshake not yet done
 
     wire [ADDR_WIDTH-1:0] wr_word_addr = wr_addr >> BYTE_BITS;
 
@@ -156,6 +167,7 @@ module axi_ram #(
             s_axi_bresp   <= RESP_OKAY;
             stg_store     <= {(PTR_W+1){1'b0}};
             stg_ovf       <= 1'b0;
+            wr_inflight   <= 1'b0;
         end else begin
             case (wr_state)
                 WR_IDLE: begin
@@ -171,6 +183,7 @@ module axi_ram #(
                         wr_wrap_mask <= wrap_mask(s_axi_awlen, s_axi_awsize);
                         stg_store    <= {(PTR_W+1){1'b0}};   // fresh staging
                         stg_ovf      <= 1'b0;
+                        wr_inflight  <= 1'b1;                 // write now in flight
                         s_axi_awready <= 1'b0;
                         s_axi_wready  <= 1'b1;
                         wr_state      <= WR_DATA;
@@ -231,6 +244,7 @@ module axi_ram #(
                         // FIFO commit happens here (in FIFO control block).
                         s_axi_bvalid  <= 1'b0;
                         s_axi_awready <= 1'b1;
+                        wr_inflight   <= 1'b0;   // write fully complete
                         wr_state      <= WR_IDLE;
                     end
                 end
@@ -239,10 +253,17 @@ module axi_ram #(
         end
     end
 
+    // FIXED-write commit pulse: staged bytes enter the FIFO on the B handshake.
+    wire fifo_commit = (wr_state == WR_RESP) && s_axi_bvalid && s_axi_bready &&
+                       (wr_burst == BURST_FIXED);
+
     // =====================================================================
-    //  READ FSM
+    //  READ FSM  (with write->read interlock)
+    //    AR may be accepted at any time, but the FIRST rvalid is held until
+    //    any in-flight write has completed its B handshake, so a read never
+    //    returns data ahead of the write meant to update it.
     // =====================================================================
-    localparam RD_IDLE = 2'd0, RD_DATA = 2'd1;
+    localparam RD_IDLE = 2'd0, RD_WAIT = 2'd1, RD_DATA = 2'd2;
 
     reg [1:0]            rd_state;
     reg [ID_WIDTH-1:0]   rd_id;
@@ -251,24 +272,72 @@ module axi_ram #(
     reg [1:0]            rd_burst;
     reg [2:0]            rd_size;
     reg [ADDR_WIDTH-1:0] rd_wrap_mask;
+    reg [7:0]            ar_delay_cnt;   // counts cycles arvalid has waited for arready
 
     reg [ADDR_WIDTH-1:0] rd_nxt_addr;
     reg [ADDR_WIDTH-1:0] rd_word_sel;
     reg [DATA_WIDTH-1:0] fa_data;
     reg                  fa_uf;
 
-    wire rd_first_fixed = (rd_state == RD_IDLE) && s_axi_arvalid && s_axi_arready &&
-                          (s_axi_arburst == BURST_FIXED);
+    // A read beat may be released only when no write is pending, or on the
+    // exact cycle the pending write's B handshake completes.
+    wire b_handshake  = (wr_state == WR_RESP) && s_axi_bvalid && s_axi_bready;
+    wire read_allowed = (!wr_inflight) || b_handshake;
+
+    // First-beat load events: fast path from IDLE, or release from WAIT.
+    wire ld_first_idle = (rd_state == RD_IDLE) && s_axi_arvalid && s_axi_arready && read_allowed;
+    wire ld_first_wait = (rd_state == RD_WAIT) && read_allowed;
+
+    wire rd_first_fixed = (ld_first_idle && (s_axi_arburst == BURST_FIXED)) ||
+                          (ld_first_wait && (rd_burst       == BURST_FIXED));
     wire rd_next_fixed  = (rd_state == RD_DATA) && s_axi_rvalid && s_axi_rready &&
                           (rd_len != 8'd0) && (rd_burst == BURST_FIXED);
+    // Subsequent beats of an unaligned burst are aligned (offset 0): only the
+    // FIRST beat is partial. Zero the byte-lane offset for non-first beats.
+    wire [ADDR_WIDTH-1:0] rd_addr_aligned =
+        {rd_addr[ADDR_WIDTH-1:BYTE_BITS], {BYTE_BITS{1'b0}}};
+
     wire        fifo_pop_req   = rd_first_fixed || rd_next_fixed;
-    wire [7:0]  fifo_pop_count = rd_first_fixed ? lane_count_f(s_axi_araddr, s_axi_arsize) :
-                                 rd_next_fixed  ? lane_count_f(rd_addr, rd_size) : 8'd0;
+    wire [7:0]  fifo_pop_count =
+        ld_first_idle ? lane_count_f(s_axi_araddr,    s_axi_arsize) :
+        ld_first_wait ? lane_count_f(rd_addr,         rd_size)      :
+        rd_next_fixed ? lane_count_f(rd_addr_aligned, rd_size)      : 8'd0;
+
+    // Present the first beat of a read on the R channel. Pop / forwarding are
+    // resolved in the FIFO control block via the wires above.
+    task load_first_beat;
+        input [ADDR_WIDTH-1:0] addr;
+        input [2:0]            size;
+        input [1:0]            burst;
+        input [7:0]            len;
+        input [ID_WIDTH-1:0]   id;
+        reg [ADDR_WIDTH-1:0] wsel;
+        begin
+            s_axi_rvalid <= 1'b1;
+            s_axi_rid    <= id;
+            s_axi_rlast  <= (len == 8'd0);
+            if (burst == BURST_FIXED) begin
+                fifo_assemble(addr, size, fifo_commit, fa_data, fa_uf);
+                s_axi_rdata <= fa_data;
+                s_axi_rresp <= fa_uf ? RESP_SLVERR : RESP_OKAY;
+            end else begin
+                wsel = addr >> BYTE_BITS;
+                if (wsel < MEM_DEPTH) begin
+                    s_axi_rdata <= mem[wsel];
+                    s_axi_rresp <= RESP_OKAY;
+                end else begin
+                    s_axi_rdata <= {DATA_WIDTH{1'b0}};
+                    s_axi_rresp <= RESP_SLVERR;
+                end
+            end
+        end
+    endtask
 
     always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
         if (!s_axi_aresetn) begin
             rd_state      <= RD_IDLE;
             s_axi_arready <= 1'b0;
+            ar_delay_cnt  <= 8'd0;
             s_axi_rvalid  <= 1'b0;
             s_axi_rlast   <= 1'b0;
             s_axi_rid     <= {ID_WIDTH{1'b0}};
@@ -277,35 +346,50 @@ module axi_ram #(
         end else begin
             case (rd_state)
                 RD_IDLE: begin
-                    s_axi_arready <= 1'b1;
                     s_axi_rvalid  <= 1'b0;
                     s_axi_rlast   <= 1'b0;
-                    if (s_axi_arvalid && s_axi_arready) begin
-                        rd_id        <= s_axi_arid;
-                        rd_addr      <= s_axi_araddr;
-                        rd_len       <= s_axi_arlen;
-                        rd_burst     <= s_axi_arburst;
-                        rd_size      <= s_axi_arsize;
-                        rd_wrap_mask <= wrap_mask(s_axi_arlen, s_axi_arsize);
-                        s_axi_rvalid <= 1'b1;
-                        s_axi_rid    <= s_axi_arid;
-                        s_axi_rlast  <= (s_axi_arlen == 8'd0);
-                        if (s_axi_arburst == BURST_FIXED) begin
-                            fifo_assemble(s_axi_araddr, s_axi_arsize, fa_data, fa_uf);
-                            s_axi_rdata <= fa_data;
-                            s_axi_rresp <= fa_uf ? RESP_SLVERR : RESP_OKAY;
-                        end else begin
-                            rd_word_sel = s_axi_araddr >> BYTE_BITS;
-                            if (rd_word_sel < MEM_DEPTH) begin
-                                s_axi_rdata <= mem[rd_word_sel];
-                                s_axi_rresp <= RESP_OKAY;
+                    if (s_axi_arready) begin
+                        // arready already asserted: complete the AR handshake
+                        if (s_axi_arvalid) begin
+                            rd_id        <= s_axi_arid;
+                            rd_addr      <= s_axi_araddr;
+                            rd_len       <= s_axi_arlen;
+                            rd_burst     <= s_axi_arburst;
+                            rd_size      <= s_axi_arsize;
+                            rd_wrap_mask <= wrap_mask(s_axi_arlen, s_axi_arsize);
+                            s_axi_arready <= 1'b0;
+                            ar_delay_cnt  <= 8'd0;
+                            if (read_allowed) begin
+                                // No write pending -> present first beat now
+                                load_first_beat(s_axi_araddr, s_axi_arsize,
+                                                s_axi_arburst, s_axi_arlen, s_axi_arid);
+                                rd_state <= RD_DATA;
                             end else begin
-                                s_axi_rdata <= {DATA_WIDTH{1'b0}};
-                                s_axi_rresp <= RESP_SLVERR;
+                                // Write in flight -> hold data until B handshake
+                                rd_state <= RD_WAIT;
                             end
                         end
-                        s_axi_arready <= 1'b0;
-                        rd_state      <= RD_DATA;
+                    end else begin
+                        // arready low: wait AR_READY_DELAY cycles after arvalid,
+                        // then assert arready for one cycle to accept the address.
+                        if (s_axi_arvalid) begin
+                            if (ar_delay_cnt >= (AR_READY_DELAY - 1)) begin
+                                s_axi_arready <= 1'b1;
+                                ar_delay_cnt  <= 8'd0;
+                            end else begin
+                                ar_delay_cnt  <= ar_delay_cnt + 8'd1;
+                            end
+                        end else begin
+                            ar_delay_cnt <= 8'd0;
+                        end
+                    end
+                end
+
+                RD_WAIT: begin
+                    s_axi_rvalid <= 1'b0;          // no rvalid before the write response
+                    if (read_allowed) begin
+                        load_first_beat(rd_addr, rd_size, rd_burst, rd_len, rd_id);
+                        rd_state <= RD_DATA;
                     end
                 end
 
@@ -314,7 +398,8 @@ module axi_ram #(
                         if (rd_len == 8'd0) begin
                             s_axi_rvalid  <= 1'b0;
                             s_axi_rlast   <= 1'b0;
-                            s_axi_arready <= 1'b1;
+                            s_axi_arready <= 1'b0;    // re-arm AR_READY_DELAY for next read
+                            ar_delay_cnt  <= 8'd0;
                             rd_state      <= RD_IDLE;
                         end else begin
                             rd_nxt_addr = next_addr(rd_addr, rd_burst, rd_size, rd_wrap_mask);
@@ -322,7 +407,8 @@ module axi_ram #(
                             rd_len      <= rd_len - 1;
                             s_axi_rlast <= (rd_len == 8'd1);
                             if (rd_burst == BURST_FIXED) begin
-                                fifo_assemble(rd_addr, rd_size, fa_data, fa_uf);
+                                // Non-first beat: aligned (offset 0) -> full width
+                                fifo_assemble(rd_addr_aligned, rd_size, fifo_commit, fa_data, fa_uf);
                                 s_axi_rdata <= fa_data;
                                 s_axi_rresp <= fa_uf ? RESP_SLVERR : RESP_OKAY;
                             end else begin
@@ -346,10 +432,9 @@ module axi_ram #(
     // =====================================================================
     //  FIFO CONTROL
     //    PUSH (commit) on B-channel handshake; POP on FIXED read beats.
+    //    A pop coincident with a commit may consume the just-committed bytes
+    //    (store-to-load forwarding), matching the read-data bypass above.
     // =====================================================================
-    wire fifo_commit = (wr_state == WR_RESP) && s_axi_bvalid && s_axi_bready &&
-                       (wr_burst == BURST_FIXED);
-
     always @(posedge s_axi_aclk or negedge s_axi_aresetn) begin
         if (!s_axi_aresetn) begin
             fifo_wr_ptr <= {PTR_W{1'b0}};
@@ -369,10 +454,12 @@ module axi_ram #(
                     end
                 end
             end
-            // POP: oldest bytes for a FIXED read beat
+            // POP: oldest bytes for a FIXED read beat. Forwarding allowed:
+            // available = pre-existing bytes + bytes committed this same cycle.
             popped = 0;
             if (fifo_pop_req)
-                popped = (fifo_pop_count <= fifo_count) ? fifo_pop_count : fifo_count;
+                popped = (fifo_pop_count <= (fifo_count + pushed)) ?
+                          fifo_pop_count : (fifo_count + pushed);
 
             fifo_wr_ptr <= wp % FIFO_DEPTH;
             fifo_rd_ptr <= (fifo_rd_ptr + popped) % FIFO_DEPTH;
