@@ -193,7 +193,9 @@
     axi4_env_config axi4_env_cfg_h;
     axi4_slave_agent_config axi4_slave_agent_cfg_h;
 
-    uvm_tlm_fifo #(bit[7:0]) referenceFifo;
+    uvm_tlm_fifo #(bit[7:0])  referenceFifo;
+
+    int fifoCounter;
     //-------------------------------------------------------
     // Externally defined Tasks and Functions
     //-------------------------------------------------------
@@ -286,13 +288,13 @@
     axi4_master_write_response_analysis_fifo= new("axi4_master_write_response_analysis_fifo",this);
     axi4_master_read_address_analysis_fifo = new("axi4_master_read_address_analysis_fifo",this);
     axi4_master_read_data_analysis_fifo = new("axi4_master_read_data_analysis_fifo",this);
-    referenceFifo = new("refrenceFifo",this,16000);
     axi4_slave_write_address_analysis_fifo = new("axi4_slave_write_address_analysis_fifo",this);
     axi4_slave_write_data_analysis_fifo = new("axi4_slave_write_data_analysis_fifo",this);
     axi4_slave_write_response_analysis_fifo= new("axi4_slave_write_response_analysis_fifo",this);
     axi4_slave_read_address_analysis_fifo = new("axi4_slave_read_address_analysis_fifo",this);
     axi4_slave_read_data_analysis_fifo = new("axi4_slave_read_data_analysis_fifo",this);
 
+    referenceFifo = new("referenceFifo",this,16000);
     write_address_key = new(1);
     write_data_key = new(1);
     write_response_key = new(1);
@@ -360,139 +362,6 @@
     super.run_phase(phase);
     fork
 
-      begin : write_check
-        // Thread-local scratch state. These were previously class members
-        // shared with the read-check thread, which corrupted each other
-        // (e.g. the read burst type read as 0 after a write completed).
-        int index;
-        int indextemp[$];
-        int tempAddress, alignAmount;
-        int wrapStartAddress, wrapEndAddress;
-        axi4_master_tx axi_master_address_tx;
-        axi4_slave_tx  axi_slave_address_tx;
-       forever begin
-        axi4_master_write_response_analysis_fifo.get(temp);
-        axi4_master_tx_bresp_count++;
-        write_txn_failed = 0;
-        `uvm_info("CHECK","ENTERED FOR WRITE CHECK ",UVM_NONE)
-        axi4_slave_write_response_analysis_fifo.get(t2);
-        axi4_slave_tx_bresp_count++;
-        $display("scb master address queue is %p slave address queue %p",masterWriteAddressQueue,slaveWriteAddressQueue);
-         $display("REQ ID IS %d",t2.bid);
-         foreach(slaveWriteAddressQueue[i])begin 
-           $display("ID IN QUEUE IS %d",slaveWriteAddressQueue[i].awid);
-         end 
-        indextemp = slaveWriteAddressQueue.find_first_index() with(item.awid == t2.bid);
-        index =indextemp[0];
-        axi_master_address_tx = masterWriteAddressQueue[index];
-        axi_slave_address_tx = slaveWriteAddressQueue[index];
-        temp.bid = bid_e'(int'(axi_master_address_tx.awid));
-        tempAddress = axi_master_address_tx.awaddr;
-        masterWriteAddressQueue.delete(index);
-        slaveWriteAddressQueue.delete(index);
-        wrapStartAddress =tempAddress - int'(tempAddress % ((2**(axi_master_address_tx.awsize))* (axi_master_address_tx.awlen +1)));
-        wrapEndAddress = wrapStartAddress + (((2**(axi_master_address_tx.awsize))* (axi_master_address_tx.awlen +1)));
-        axi4_write_address_comparision(axi_master_address_tx,axi_slave_address_tx); //address check done 
-
-        if((axi_master_address_tx.awaddr % (2**axi_master_address_tx.awsize))!= 0) begin
-          alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))*(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
-        end
-         $display("size len of write is %d",masterArrayDataQueue[index].size());
-        for(int i=0;i < masterArrayDataQueue[index].size();i++) begin    
-          int count =0; 
-          int j=0;
-
-          if(masterArrayDataQueue[index][i].strobe == slaveArrayDataQueue[index][i].strobe) begin 
-            byte_data_cmp_verified_wstrb_count++;
-          end  
-          else begin 
-            byte_data_cmp_failed_wstrb_count++;
-          end 
-
-          if(i !=0)
-            alignAmount =0;
-
-          case(axi_master_address_tx.awburst)
-            2'b 00: begin 
-              for(int j=0,k=0;j<((2**(axi_master_address_tx.awsize)));j++) begin 
-                if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
-                  temp.bresp = WRITE_SLVERR;
-                end 
-                k=tempAddress % (DATA_WIDTH/8);
-                if(masterArrayDataQueue[index][i].data[8*k+7 -: 8] != slaveArrayDataQueue[index][i].data[8*k+7 -: 8])begin 
-                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8],slaveArrayDataQueue[index][i].data[8*k+7 -: 8]))
-                  byte_data_cmp_failed_wdata_count++;
-                  write_txn_failed = 1;
-                end 
-                else begin 
-                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8]),UVM_NONE);
-
-                  byte_data_cmp_verified_wdata_count++;
-                end    
-                referenceFifo.put(masterArrayDataQueue[index][i].data[8*k+7-:8]);  
-                tempAddress++;
-              end  
-            end  
-            2'b 01: begin 
-              for(int k=0;k< ((2**(axi_master_address_tx.awsize) - (alignAmount)));k++) begin   
-                if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
-                  temp.bresp = WRITE_SLVERR;
-                end 
-                j =tempAddress % (DATA_WIDTH/8);
-                if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
-                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
-                  byte_data_cmp_failed_wdata_count++;
-                  write_txn_failed = 1; 
-                end
-                else begin 
-                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
-
-                  byte_data_cmp_verified_wdata_count++;
-                end 
-                if(masterArrayDataQueue[index][i].strobe[j]==1)begin 
-                  referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j+7-:8]);
-                end  
-                tempAddress++;
-              end            
-            end 
-
-            2'b10:begin   
-              for(int k=0;k< ((2**(axi_master_address_tx.awsize) - (alignAmount)));k++) begin
-                if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
-                  temp.bresp = WRITE_SLVERR;
-                end 
-                j =tempAddress % (DATA_WIDTH/8);
-                if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
-                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
-                  byte_data_cmp_failed_wdata_count++;
-                  write_txn_failed = 1;
-                end
-                else begin 
-                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
-                  byte_data_cmp_verified_wdata_count++;
-                end 
-                if(masterArrayDataQueue[index][i].strobe[j]==1)      begin                                             referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j+7-:8]);
-                end  
-                tempAddress++;
-
-                if(tempAddress == wrapEndAddress)
-                  tempAddress = wrapStartAddress; 
-              end 
-            end 
-          endcase   
-        end
-        $display("WRITE CHECK DONE");
-        total_write_txn++;
-        if(write_txn_failed) failed_write_txn++;
-        else                 passed_write_txn++;
-        `uvm_info(get_type_name(),$sformatf("WRITE transaction %0s | total_write=%0d pass=%0d fail=%0d",
-          write_txn_failed ? "FAIL" : "PASS", total_write_txn, passed_write_txn, failed_write_txn),UVM_MEDIUM)
-        axi4_write_response_comparision(temp,t2);
-        masterArrayDataQueue.delete(index);
-        slaveArrayDataQueue.delete(index);
-      end
-      end : write_check
-
       begin : read_check
         // Thread-local scratch state, independent of the write-check thread.
         // 'flag', 'axi_master_address_tx', 'tempAddress', 'alignAmount' and the
@@ -545,24 +414,30 @@
           $display("obtained read rlast");
           flag=0;
         end
-        $display("BURST TYPE IS %d",axi_master_address_tx.arburst);
+        $display("BURST TYPE IS %d and tranfser size is %d",axi_master_address_tx.arburst,((2**(axi_master_address_tx.arsize))- (alignAmount)));
         case(axi_master_address_tx.arburst)
           2'b 00: begin 
             for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin 
               if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
                 `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH)
               end    
-
-              referenceFifo.get(readCompare);
-              if(t1.rdata[0][8*j+7-:8] !=readCompare) begin 
-                `uvm_error("READ CHECK FAIL",$sformatf("THE READ DATA DOESNT MATCH when reference DATA  is %0d and actual one is %0d",readCompare,t1.rdata[0]))
+              j = tempAddress % (DATA_WIDTH/8);
+              if(referenceFifo.used()>0) begin
+                referenceFifo.get(readCompare);
+              end 
+              else begin 
+                readCompare ='0;
+              end 
+              if(t1.rdata[0][8*j +:8] !=readCompare) begin 
+                `uvm_error("READ CHECK FAIL",$sformatf("THE READ DATA DOESNT MATCH when reference DATA  is %h and actual one is %h",readCompare,t1.rdata[0][8*j+:8]))
                 byte_data_cmp_failed_rdata_count++;
                 read_txn_failed = 1;
               end
               else begin 
-                `uvm_info("READ CHECK PASS",$sformatf("THE READ DATA MATCHES  %0d",readCompare),UVM_NONE);
+                `uvm_info("READ CHECK PASS",$sformatf("THE READ DATA MATCHES  %h",readCompare),UVM_NONE);
                 byte_data_cmp_verified_rdata_count++;
-              end                   
+              end              
+              tempAddress++;
             end 
           end 
           2'b 01: begin
@@ -648,6 +523,137 @@
         end
       end
       end : read_check
+       begin : write_check
+        // Thread-local scratch state. These were previously class members
+        // shared with the read-check thread, which corrupted each other
+        // (e.g. the read burst type read as 0 after a write completed).
+        int index;
+        int indextemp[$];
+        int tempAddress, alignAmount;
+        int wrapStartAddress, wrapEndAddress;
+        axi4_master_tx axi_master_address_tx;
+        axi4_slave_tx  axi_slave_address_tx;
+       forever begin
+        axi4_master_write_response_analysis_fifo.get(temp);
+        axi4_master_tx_bresp_count++;
+        write_txn_failed = 0;
+        `uvm_info("CHECK","ENTERED FOR WRITE CHECK ",UVM_NONE)
+        axi4_slave_write_response_analysis_fifo.get(t2);
+         $display("WRITE CHECK MEM WRITE HAPPENS");
+        axi4_slave_tx_bresp_count++;
+        indextemp = slaveWriteAddressQueue.find_first_index() with(item.awid == t2.bid);
+        index =indextemp[0];
+        axi_master_address_tx = masterWriteAddressQueue[index];
+        axi_slave_address_tx = slaveWriteAddressQueue[index];
+        temp.bid = bid_e'(int'(axi_master_address_tx.awid));
+        tempAddress = axi_master_address_tx.awaddr;
+        masterWriteAddressQueue.delete(index);
+        slaveWriteAddressQueue.delete(index);
+        wrapStartAddress =tempAddress - int'(tempAddress % ((2**(axi_master_address_tx.awsize))* (axi_master_address_tx.awlen +1)));
+        wrapEndAddress = wrapStartAddress + (((2**(axi_master_address_tx.awsize))* (axi_master_address_tx.awlen +1)));
+        axi4_write_address_comparision(axi_master_address_tx,axi_slave_address_tx); //address check done 
+
+        if((axi_master_address_tx.awaddr % (2**axi_master_address_tx.awsize))!= 0) begin
+          alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))*(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
+        end
+        for(int i=0;i < masterArrayDataQueue[index].size();i++) begin    
+          int count =0; 
+          int j=0;
+
+          if(masterArrayDataQueue[index][i].strobe == slaveArrayDataQueue[index][i].strobe) begin 
+            byte_data_cmp_verified_wstrb_count++;
+          end  
+          else begin 
+            byte_data_cmp_failed_wstrb_count++;
+          end 
+
+          if(i !=0)
+            alignAmount =0;
+
+          case(axi_master_address_tx.awburst)
+            2'b 00: begin
+              $display("STRB FOR THE WRITE %b",masterArrayDataQueue[index][i].strobe);
+              for(int j=0,k=0;j<((2**(axi_master_address_tx.awsize))-alignAmount);j++) begin 
+                if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
+                  temp.bresp = WRITE_SLVERR;
+                end 
+                k=tempAddress % (DATA_WIDTH/8);
+                if(masterArrayDataQueue[index][i].data[8*k+7 -: 8] != slaveArrayDataQueue[index][i].data[8*k+7 -: 8])begin 
+                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8],slaveArrayDataQueue[index][i].data[8*k+7 -: 8]))
+                  byte_data_cmp_failed_wdata_count++;
+                  write_txn_failed = 1;
+                end 
+                else begin 
+                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8]),UVM_NONE);
+
+                  byte_data_cmp_verified_wdata_count++;
+                end
+                if(masterArrayDataQueue[index][i].strobe[k]==1)begin
+                  $display("DATA PUSHED INTO FIFO IS %h",masterArrayDataQueue[index][i].data[8*k+7-:8]);
+                  referenceFifo.put(masterArrayDataQueue[index][i].data[8*k+7-:8]); 
+                end 
+                tempAddress++;
+              end  
+            end  
+            2'b 01: begin 
+              for(int k=0;k< ((2**(axi_master_address_tx.awsize) - (alignAmount)));k++) begin   
+                if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
+                  temp.bresp = WRITE_SLVERR;
+                end 
+                j =tempAddress % (DATA_WIDTH/8);
+                if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
+                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
+                  byte_data_cmp_failed_wdata_count++;
+                  write_txn_failed = 1; 
+                end
+                else begin 
+                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
+
+                  byte_data_cmp_verified_wdata_count++;
+                end 
+                if(masterArrayDataQueue[index][i].strobe[j]==1)begin 
+                  referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j+7-:8]);
+                end  
+                tempAddress++;
+              end            
+            end 
+
+            2'b10:begin   
+              for(int k=0;k< ((2**(axi_master_address_tx.awsize) - (alignAmount)));k++) begin
+                if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
+                  temp.bresp = WRITE_SLVERR;
+                end 
+                j =tempAddress % (DATA_WIDTH/8);
+                if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
+                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
+                  byte_data_cmp_failed_wdata_count++;
+                  write_txn_failed = 1;
+                end
+                else begin 
+                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
+                  byte_data_cmp_verified_wdata_count++;
+                end 
+                if(masterArrayDataQueue[index][i].strobe[j]==1)      begin                                             referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j+7-:8]);
+                end  
+                tempAddress++;
+
+                if(tempAddress == wrapEndAddress)
+                  tempAddress = wrapStartAddress; 
+              end 
+            end 
+          endcase   
+        end
+        total_write_txn++;
+        if(write_txn_failed) failed_write_txn++;
+        else                 passed_write_txn++;
+        `uvm_info(get_type_name(),$sformatf("WRITE transaction %0s | total_write=%0d pass=%0d fail=%0d",
+          write_txn_failed ? "FAIL" : "PASS", total_write_txn, passed_write_txn, failed_write_txn),UVM_MEDIUM)
+        axi4_write_response_comparision(temp,t2);
+        masterArrayDataQueue.delete(index);
+        slaveArrayDataQueue.delete(index);
+      end
+      end : write_check
+
 
 
     join_none
@@ -1511,4 +1517,3 @@
   endfunction : report_phase
 
 `endif
-
