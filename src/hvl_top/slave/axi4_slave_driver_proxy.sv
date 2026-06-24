@@ -221,11 +221,13 @@
           data_tx=process::self();
           semaphore_write_key.get(1);
           axi4_slave_write_data_in_fifo_h.get(local_slave_data_tx);
+          local_slave_data_tx = axi4_slave_tx :: type_id :: create("data_tx");
           axi4_slave_seq_item_converter::from_write_class(local_slave_data_tx,struct_write_packet);
           axi4_slave_cfg_converter::from_class(axi4_slave_agent_cfg_h,struct_cfg);
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH);
           axi4_slave_drv_bfm_h.axi4_write_data_phase(struct_write_packet,struct_cfg);
           `uvm_info("DEBUG_SLAVE_WDATA_PROXY", $sformatf("AFTER :: Reciving struct pkt from bfm \n%p",struct_write_packet), UVM_HIGH);
+          axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_data_tx);
           `uvm_info(get_type_name(), $sformatf("W data sampled | beats=%0d wlast=%0b",
                     local_slave_data_tx.wdata.size(), local_slave_data_tx.wlast), UVM_MEDIUM)
           `uvm_info(get_type_name(), $sformatf("Write data packet:\n%s", local_slave_data_tx.sprint()), UVM_HIGH)
