@@ -422,8 +422,10 @@
                   `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8]),UVM_NONE);
 
                   byte_data_cmp_verified_wdata_count++;
-                end    
-                referenceFifo.put(masterArrayDataQueue[index][i].data[8*k+7-:8]);  
+                end
+                if(masterArrayDataQueue[index][i].strobe[j]==1)begin
+                   referenceFifo.put(masterArrayDataQueue[index][i].data[8*k+7-:8]); 
+                end 
                 tempAddress++;
               end  
             end  
@@ -545,8 +547,13 @@
               if(!(tempAddress inside{[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})) begin 
                 `uvm_info("SCOREBOARD","ADDRESS OUTSIDE SLAVE ADDRESS RANGE",UVM_HIGH)
               end    
-
-              referenceFifo.get(readCompare);
+              
+              if(referenceFifo.used>0) begin
+                referenceFifo.get(readCompare);
+              end 
+              else begin 
+                readCompare ='0;
+              end 
               if(t1.rdata[0][8*j+7-:8] !=readCompare) begin 
                 `uvm_error("READ CHECK FAIL",$sformatf("THE READ DATA DOESNT MATCH when reference DATA  is %0d and actual one is %0d",readCompare,t1.rdata[0]))
                 byte_data_cmp_failed_rdata_count++;
