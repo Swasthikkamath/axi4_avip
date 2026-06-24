@@ -165,7 +165,7 @@ interface axi4_slave_monitor_bfm(input aclk, input aresetn,
       `uvm_info("FROM SLAVE MON BFM",$sformatf("Inside while loop of write response sample"),UVM_HIGH)
     end    
     `uvm_info("FROM SLAVE MON BFM",$sformatf("after while loop of write response "),UVM_HIGH)
-   
+    @(slaveMonCb);
     $display("sampled bid is %d",slaveMonCb.bid);
     req.bid      = slaveMonCb.bid;
     req.bresp    = slaveMonCb.bresp;  
