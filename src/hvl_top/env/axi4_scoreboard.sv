@@ -45,7 +45,7 @@
     axi4_master_tx masterReadAddressQueue[int];
     axi4_slave_tx slaveReadAddressQueue[int];
 
-    logic[7:0]referenceData[longint];
+    bit[7:0]referenceData[longint];
     //Variable : axi4_master_analysis_fifo
     //Used to store the axi4_master_data
     uvm_analysis_imp_master_read_address#(axi4_master_tx,axi4_scoreboard) axi4_master_read_address_analysis_fifo;
@@ -405,6 +405,10 @@
           if(axi_master_address_tx.araddr % (2**axi_master_address_tx.arsize) != 0) begin
             alignAmount = axi_master_address_tx.araddr %((2**(axi_master_address_tx.arsize)));          
           end
+          else 
+            alignAmount =0;
+
+          $display("alignAmount IS %d when araddr is %d and size is ",alignAmount,axi_master_address_tx.araddr,axi_master_address_tx.arsize);
           flag=1;
         end
         else begin 
@@ -414,7 +418,7 @@
           $display("obtained read rlast");
           flag=0;
         end
-        $display("BURST TYPE IS %d and tranfser size is %d",axi_master_address_tx.arburst,((2**(axi_master_address_tx.arsize))- (alignAmount)));
+        $display("BURST TYPE IS %d and tranfser size is %d alignAmount=%d",axi_master_address_tx.arburst,((2**(axi_master_address_tx.arsize))- (alignAmount)),alignAmount);
         case(axi_master_address_tx.arburst)
           2'b 00: begin 
             for(int k=0,j=0; k< ((2**(axi_master_address_tx.arsize))- (alignAmount));k++) begin 
@@ -448,7 +452,7 @@
               end 
               if(referenceData.exists(tempAddress) ==1) begin
                 j = tempAddress % (DATA_WIDTH/8);
-                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
+                if(referenceData[tempAddress] != t1.rdata[0][8*j +:8])begin 
                   `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,referenceData[tempAddress],t1.rdata[0][8*j+7-:8]))
                   byte_data_cmp_failed_rdata_count++;
                   read_txn_failed = 1;
@@ -482,8 +486,8 @@
               if(referenceData.exists(tempAddress) ==1) begin
                 j = tempAddress % (DATA_WIDTH/8);
 
-                if(referenceData[tempAddress] != t1.rdata[0][8*j+7-:8])begin 
-                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,readCompare,t1.rdata[0][8*j+7-:8]))
+                if(referenceData[tempAddress] != t1.rdata[0][8*j +:8])begin 
+                  `uvm_error("READ CHECK FAIL",$sformatf("THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %0d and actual one is %0d",j,referenceData[tempAddress],t1.rdata[0][8*j +:8]))
                   byte_data_cmp_failed_rdata_count++;
                   read_txn_failed = 1;
                 end   
@@ -556,6 +560,9 @@
         if((axi_master_address_tx.awaddr % (2**axi_master_address_tx.awsize))!= 0) begin
           alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))*(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
         end
+        else
+          alignAmount = 0;
+        $display("[USER READ]: alignAmount = %0d",alignAmount);
         for(int i=0;i < masterArrayDataQueue[index].size();i++) begin    
           int count =0; 
           int j=0;
@@ -578,19 +585,19 @@
                   temp.bresp = WRITE_SLVERR;
                 end 
                 k=tempAddress % (DATA_WIDTH/8);
-                if(masterArrayDataQueue[index][i].data[8*k+7 -: 8] != slaveArrayDataQueue[index][i].data[8*k+7 -: 8])begin 
-                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8],slaveArrayDataQueue[index][i].data[8*k+7 -: 8]))
+                if(masterArrayDataQueue[index][i].data[8*k +: 8] != slaveArrayDataQueue[index][i].data[8*k +: 8])begin 
+                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*k +: 8],slaveArrayDataQueue[index][i].data[8*k +: 8]))
                   byte_data_cmp_failed_wdata_count++;
                   write_txn_failed = 1;
                 end 
                 else begin 
-                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k+7 -: 8]),UVM_NONE);
+                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*k +: 8]),UVM_NONE);
 
                   byte_data_cmp_verified_wdata_count++;
                 end
                 if(masterArrayDataQueue[index][i].strobe[k]==1)begin
-                  $display("DATA PUSHED INTO FIFO IS %h",masterArrayDataQueue[index][i].data[8*k+7-:8]);
-                  referenceFifo.put(masterArrayDataQueue[index][i].data[8*k+7-:8]); 
+                  $display("DATA PUSHED INTO FIFO IS %h",masterArrayDataQueue[index][i].data[8*k +:8]);
+                  referenceFifo.put(masterArrayDataQueue[index][i].data[8*k +:8]); 
                 end 
                 tempAddress++;
               end  
@@ -601,18 +608,18 @@
                   temp.bresp = WRITE_SLVERR;
                 end 
                 j =tempAddress % (DATA_WIDTH/8);
-                if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
-                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
+                if(masterArrayDataQueue[index][i].data[8*j +: 8] != slaveArrayDataQueue[index][i].data[8*j +: 8])begin 
+                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j +: 8],slaveArrayDataQueue[index][i].data[8*j +: 8]))
                   byte_data_cmp_failed_wdata_count++;
                   write_txn_failed = 1; 
                 end
                 else begin 
-                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
+                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j +: 8]),UVM_NONE);
 
                   byte_data_cmp_verified_wdata_count++;
                 end 
                 if(masterArrayDataQueue[index][i].strobe[j]==1)begin 
-                  referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j+7-:8]);
+                  referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j +:8]);
                 end  
                 tempAddress++;
               end            
@@ -624,16 +631,16 @@
                   temp.bresp = WRITE_SLVERR;
                 end 
                 j =tempAddress % (DATA_WIDTH/8);
-                if(masterArrayDataQueue[index][i].data[8*j+7 -: 8] != slaveArrayDataQueue[index][i].data[8*j+7 -: 8])begin 
-                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8],slaveArrayDataQueue[index][i].data[8*j+7 -: 8]))
+                if(masterArrayDataQueue[index][i].data[8*j +: 8] != slaveArrayDataQueue[index][i].data[8*j +: 8])begin 
+                  `uvm_error("WRITE CHECK FAIL",$sformatf("THE BYTE %0D is not equal the byte in expected is %0b and in actual is %0b",j,masterArrayDataQueue[index][i].data[8*j +: 8],slaveArrayDataQueue[index][i].data[8*j +: 8]))
                   byte_data_cmp_failed_wdata_count++;
                   write_txn_failed = 1;
                 end
                 else begin 
-                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j+7 -: 8]),UVM_NONE);
+                  `uvm_info("WRITE CHECK PASS",$sformatf("THE BYTE MATCHES IN POSITION %0d reference data is %0h",j,masterArrayDataQueue[index][i].data[8*j +: 8]),UVM_NONE);
                   byte_data_cmp_verified_wdata_count++;
                 end 
-                if(masterArrayDataQueue[index][i].strobe[j]==1)      begin                                             referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j+7-:8]);
+                if(masterArrayDataQueue[index][i].strobe[j]==1)      begin                                             referenceData[tempAddress]=(masterArrayDataQueue[index][i].data[8*j +:8]);
                 end  
                 tempAddress++;
 
