@@ -16,7 +16,7 @@ interface axi4_master_driver_bfm(input bit                      aclk,
                                  //Write Address Channel Signals
                                  output reg               [3:0] awid,
                                  output reg [ADDRESS_WIDTH-1:0] awaddr,
-                                 output reg               [3:0] awlen,
+                                 output reg               [7:0] awlen,
                                  output reg               [2:0] awsize,
                                  output reg               [1:0] awburst,
                                  output reg               [1:0] awlock,
@@ -95,8 +95,6 @@ interface axi4_master_driver_bfm(input bit                      aclk,
     @(negedge aresetn);
     `uvm_info(name,$sformatf("SYSTEM RESET DETECTED"),UVM_HIGH)
 
-    default_values();
- 
     @(posedge aresetn);
     `uvm_info(name,$sformatf("SYSTEM RESET DEACTIVATED"),UVM_HIGH)
   endtask : wait_for_aresetn

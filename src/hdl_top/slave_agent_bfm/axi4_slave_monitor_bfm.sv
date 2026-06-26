@@ -11,7 +11,7 @@ interface axi4_slave_monitor_bfm(input aclk, input aresetn,
                                 //Write_address_channel
                                 input [3:0]awid    ,
                                 input [ADDRESS_WIDTH-1:0]awaddr  ,
-                                input [3: 0]awlen   ,
+                                input [7: 0]awlen   ,
                                 input [2: 0]awsize  ,
                                 input [1: 0]awburst ,
                                 input [1: 0]awlock  ,

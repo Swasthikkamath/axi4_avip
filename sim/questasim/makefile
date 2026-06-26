@@ -1,4 +1,3 @@
-# -s means silent mode
 # The command executed along with the output will be displayed on the terminal
 # To get only the ouput use 'silent' mode
 #
@@ -131,7 +130,7 @@ override test_folder = $(test)
 endif
 
 simulate:
-	mkdir -p $(test_folder)
+	mkdir $(test_folder)
 
 	# Use -novopt for no optimization - Makes the simulation slower
 	# vsim -pli finesim.so -coverage top
