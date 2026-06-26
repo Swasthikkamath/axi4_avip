@@ -44,8 +44,8 @@ module hdl_top;
     logic               [1:0] AWLOCK_dec;
     logic               [3:0] AWCACHE_dec;
     logic               [2:0] AWPROT_dec;
-    logic               [63:0] WDATA_dec;
-    logic               [3:0] WSTRB_dec; // 4 bits not sufficient for strobe 
+    logic     [DATA_WIDTH-1:0] WDATA_dec;
+    logic   [STROBE_WIDTH-1:0] WSTRB_dec; // strobe width tracks DATA_WIDTH
     logic               [3:0] TXN_ID_R_dec;
     logic               [31:0] ARADDR_dec;
     logic               [1:0] ARBURST_dec;
@@ -81,7 +81,11 @@ module hdl_top;
                .aresetn(aresetn));
 
 
- axi_ram slave (
+ axi_ram #(
+    .DATA_WIDTH (DATA_WIDTH),
+    .ADDR_WIDTH (ADDRESS_WIDTH),
+    .ID_WIDTH   (4)
+ ) slave (
     // Global
     .s_axi_aclk    (aclk),
     .s_axi_aresetn    (aresetn),
