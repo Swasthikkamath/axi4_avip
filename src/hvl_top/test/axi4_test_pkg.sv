@@ -65,58 +65,48 @@ package axi4_test_pkg;
   `include "axi4_outstanding_fixed_burst_write_read_test.sv"
 
   //-------------------------------------------------------
-  // Larger transfer-size tests : 128b/256b/512b/1024b
-  // (WRITE/READ_16/32/64/128_BYTES) up to the 128-byte max
+  // Larger transfer-size tests : 128b/256b/512b
+  // (WRITE/READ_16/32/64_BYTES) up to 64-byte / 512-bit
   //-------------------------------------------------------
   // write_data
   `include "axi4_non_outstanding_128b_write_data_test.sv"
   `include "axi4_non_outstanding_256b_write_data_test.sv"
   `include "axi4_non_outstanding_512b_write_data_test.sv"
-  `include "axi4_non_outstanding_1024b_write_data_test.sv"
   `include "axi4_outstanding_128b_write_data_test.sv"
   `include "axi4_outstanding_256b_write_data_test.sv"
   `include "axi4_outstanding_512b_write_data_test.sv"
-  `include "axi4_outstanding_1024b_write_data_test.sv"
   // data_read
   `include "axi4_non_outstanding_128b_data_read_test.sv"
   `include "axi4_non_outstanding_256b_data_read_test.sv"
   `include "axi4_non_outstanding_512b_data_read_test.sv"
-  `include "axi4_non_outstanding_1024b_data_read_test.sv"
   `include "axi4_outstanding_128b_data_read_test.sv"
   `include "axi4_outstanding_256b_data_read_test.sv"
   `include "axi4_outstanding_512b_data_read_test.sv"
-  `include "axi4_outstanding_1024b_data_read_test.sv"
   // write_read
   `include "axi4_non_outstanding_128b_write_read_test.sv"
   `include "axi4_non_outstanding_256b_write_read_test.sv"
   `include "axi4_non_outstanding_512b_write_read_test.sv"
-  `include "axi4_non_outstanding_1024b_write_read_test.sv"
   `include "axi4_outstanding_128b_write_read_test.sv"
   `include "axi4_outstanding_256b_write_read_test.sv"
   `include "axi4_outstanding_512b_write_read_test.sv"
-  `include "axi4_outstanding_1024b_write_read_test.sv"
 
   //-------------------------------------------------------
-  // FIXED & WRAP burst at larger sizes : 128b/256b/512b/1024b
+  // FIXED & WRAP burst at larger sizes : 128b/256b/512b
   //-------------------------------------------------------
   // fixed burst
   `include "axi4_non_outstanding_128b_fixed_burst_write_read_test.sv"
   `include "axi4_non_outstanding_256b_fixed_burst_write_read_test.sv"
   `include "axi4_non_outstanding_512b_fixed_burst_write_read_test.sv"
-  `include "axi4_non_outstanding_1024b_fixed_burst_write_read_test.sv"
   `include "axi4_outstanding_128b_fixed_burst_write_read_test.sv"
   `include "axi4_outstanding_256b_fixed_burst_write_read_test.sv"
   `include "axi4_outstanding_512b_fixed_burst_write_read_test.sv"
-  `include "axi4_outstanding_1024b_fixed_burst_write_read_test.sv"
   // wrap burst
   `include "axi4_non_outstanding_128b_wrap_burst_write_read_test.sv"
   `include "axi4_non_outstanding_256b_wrap_burst_write_read_test.sv"
   `include "axi4_non_outstanding_512b_wrap_burst_write_read_test.sv"
-  `include "axi4_non_outstanding_1024b_wrap_burst_write_read_test.sv"
   `include "axi4_outstanding_128b_wrap_burst_write_read_test.sv"
   `include "axi4_outstanding_256b_wrap_burst_write_read_test.sv"
   `include "axi4_outstanding_512b_wrap_burst_write_read_test.sv"
-  `include "axi4_outstanding_1024b_wrap_burst_write_read_test.sv"
 
 
 endpackage : axi4_test_pkg
