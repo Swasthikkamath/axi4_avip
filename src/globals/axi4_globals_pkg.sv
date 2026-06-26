@@ -27,9 +27,9 @@ package axi4_globals_pkg;
   parameter int NO_OF_SLAVES = 1;
 
 
-  parameter int MASTER_TRANSACTION_WRITE_ISSUE_COUNT =4;
+  parameter int MASTER_TRANSACTION_WRITE_ISSUE_COUNT =10;
 
-  parameter int MASTER_TRANSACTION_READ_ISSUE_COUNT =4;
+  parameter int MASTER_TRANSACTION_READ_ISSUE_COUNT =10;
 
 
   //Parameter: ADDRESS_WIDTH
@@ -38,7 +38,7 @@ package axi4_globals_pkg;
 
   //Parameter: DATA_WIDTH
   //Used to set the data width
-  parameter int DATA_WIDTH = 32;
+  parameter int DATA_WIDTH = 64;
 
   //Parameter: SLAVE_MEMORY_SIZE
   //Sets the memory size of the slave in KB
