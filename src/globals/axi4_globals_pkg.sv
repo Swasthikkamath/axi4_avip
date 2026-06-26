@@ -27,9 +27,9 @@ package axi4_globals_pkg;
   parameter int NO_OF_SLAVES = 1;
 
 
-  parameter int MASTER_TRANSACTION_WRITE_ISSUE_COUNT =50;
+  parameter int MASTER_TRANSACTION_WRITE_ISSUE_COUNT =25;
 
-  parameter int MASTER_TRANSACTION_READ_ISSUE_COUNT =50;
+  parameter int MASTER_TRANSACTION_READ_ISSUE_COUNT =25;
 
 
   //Parameter: ADDRESS_WIDTH
@@ -38,7 +38,7 @@ package axi4_globals_pkg;
 
   //Parameter: DATA_WIDTH
   //Used to set the data width
-  parameter int DATA_WIDTH = 64;
+  parameter int DATA_WIDTH =512;
 
   //Parameter: SLAVE_MEMORY_SIZE
   //Sets the memory size of the slave in KB
@@ -62,7 +62,7 @@ package axi4_globals_pkg;
 
   //Variable: LENGTH
   //Indicates the length of the address write and read channels
-  parameter int LENGTH = 8;
+  parameter int LENGTH = 4;
 
   //Variable: OUTSTANDING_FIFO_DEPTH
   //Indicates the fifo depth of outstanding transaction

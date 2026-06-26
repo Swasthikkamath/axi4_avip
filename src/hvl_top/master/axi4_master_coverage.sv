@@ -52,6 +52,9 @@ class axi4_master_coverage extends uvm_subscriber #(axi4_master_tx);
       bins AWSIZE_2BYTES   = {1};
       bins AWSIZE_4BYTES   = {2};
       bins AWSIZE_8BYTES   = {3};
+      bins AWSIZE_16BYTES  = {4};
+      bins AWSIZE_32BYTES  = {5};
+      bins AWSIZE_64BYTES  = {6};
     }
 
 
@@ -100,6 +103,9 @@ class axi4_master_coverage extends uvm_subscriber #(axi4_master_tx);
       bins ARSIZE_2BYTES   = {1};
       bins ARSIZE_4BYTES   = {2};
       bins ARSIZE_8BYTES   = {3};
+      bins ARSIZE_16BYTES  = {4};
+      bins ARSIZE_32BYTES  = {5};
+      bins ARSIZE_64BYTES  = {6};
     }
 
 
