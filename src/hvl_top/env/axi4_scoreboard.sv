@@ -560,6 +560,9 @@
         if((axi_master_address_tx.awaddr % (2**axi_master_address_tx.awsize))!= 0) begin
           alignAmount = axi_master_address_tx.awaddr - ((2**(axi_master_address_tx.awsize))*(int'(axi_master_address_tx.awaddr/(2**(axi_master_address_tx.awsize))))); 
         end
+        else
+          alignAmount = 0;
+        $display("[USER READ]: alignAmount = %0d",alignAmount);
         for(int i=0;i < masterArrayDataQueue[index].size();i++) begin    
           int count =0; 
           int j=0;
