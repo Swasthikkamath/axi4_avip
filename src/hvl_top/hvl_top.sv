@@ -6,7 +6,7 @@ module hvl_top;
   //-------------------------------------------------------
   // Package : Importing Uvm Pakckage and Test Package
   //-------------------------------------------------------
-  import axi4_test_pkg::*;
+  import axi4_standalone_slave_test_pkg::*;
   import uvm_pkg::*;
 
   //-------------------------------------------------------
