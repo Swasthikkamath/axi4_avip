@@ -204,13 +204,14 @@
           axi4_slave_cfg_converter::from_class(axi4_slave_agent_cfg_h,struct_cfg);
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH); 
           axi4_slave_drv_bfm_h.axi4_write_address_phase(struct_write_packet);
-          axi4_slave_seq_item_converter::to_write_class(struct_write_packet,local_slave_addr_tx);
+          axi4_slave_seq_item_converter::to_write_class(struct_write_packet,req_wr);
           `uvm_info(get_type_name(), $sformatf("AW accepted | awid=%0d awaddr=0x%0h awlen=%0d awsize=%s awburst=%s",
                     local_slave_addr_tx.awid, local_slave_addr_tx.awaddr, local_slave_addr_tx.awlen,
                     local_slave_addr_tx.awsize.name(), local_slave_addr_tx.awburst.name()), UVM_MEDIUM)
           `uvm_info(get_type_name(), $sformatf("Write address packet:\n%s",local_slave_addr_tx.sprint()), UVM_HIGH)
-          axiSlaveAddressQueue.push_back(local_slave_addr_tx);
-          axiSlaveIdQueue.push_back(local_slave_addr_tx.awid);
+          axiSlaveAddressQueue.push_back(req_wr);
+          $display("req wr got awid is %d",req_wr.awid);
+          axiSlaveIdQueue.push_back(req_wr.awid);
         end:WRITE_ADDRESS_CHANNEL
 
         begin : WRITE_DATA_CHANNEL
@@ -220,6 +221,7 @@
           data_tx=process::self();
           semaphore_write_key.get(1);
           axi4_slave_write_data_in_fifo_h.get(local_slave_data_tx);
+          local_slave_data_tx = axi4_slave_tx :: type_id :: create("data_tx");
           axi4_slave_seq_item_converter::from_write_class(local_slave_data_tx,struct_write_packet);
           axi4_slave_cfg_converter::from_class(axi4_slave_agent_cfg_h,struct_cfg);
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH);
@@ -284,6 +286,7 @@
             axiSlaveAddressQueue.delete(indexTracker[0]);
             local_slave_data_tx = axiSlaveDataQueue[indexTracker[0]];
             axiSlaveDataQueue.delete(indexTracker[0]);
+            $display("slave driver sent out bid %d",local_slave_addr_tx.awid);
             bid_local = local_slave_addr_tx.awid;
             if(local_slave_addr_tx.awburst == WRITE_FIXED) begin 
               end_wrap_addr =  local_slave_addr_tx.awaddr + ((2**local_slave_addr_tx.awsize));
@@ -305,6 +308,7 @@
           else begin
             local_slave_addr_tx = axiSlaveAddressQueue.pop_front();
             local_slave_data_tx = axiSlaveDataQueue.pop_front();
+            $display("slave driver sent out bid %d",local_slave_addr_tx.awid);
             bid_local = local_slave_addr_tx.awid;
             if(local_slave_addr_tx.awburst == WRITE_FIXED) begin
               end_wrap_addr =  local_slave_addr_tx.awaddr + ((2**local_slave_addr_tx.awsize));
@@ -393,14 +397,14 @@
           //read address_task
           axi4_slave_drv_bfm_h.axi4_read_address_phase(struct_read_packet,struct_cfg);
           //Converting struct into transaction data type
-          axi4_slave_seq_item_converter::to_read_class(struct_read_packet,local_slave_tx);
+          axi4_slave_seq_item_converter::to_read_class(struct_read_packet,req_rd);
           `uvm_info("DEBUG_SLAVE_READ_ADDR_PROXY", $sformatf(" to_class_raddr_phase_slave_proxy  \n %p",struct_read_packet), UVM_HIGH);
 
 
           //Putting back the sampled read address data into fifo
-          axi4_slave_read_addr_fifo_h.put(local_slave_tx);
-          axiReadSlaveAddressQueue.push_back(local_slave_tx);
-          axiReadSlaveIdQueue.push_back(local_slave_tx.arid);
+          axi4_slave_read_addr_fifo_h.put(req_rd);
+          axiReadSlaveAddressQueue.push_back(req_rd);
+          axiReadSlaveIdQueue.push_back(req_rd.arid);
           waitStates++; 
           `uvm_info(get_type_name(), $sformatf("AR accepted | arid=%0d araddr=0x%0h arlen=%0d arsize=%s arburst=%s",
                     local_slave_tx.arid, local_slave_tx.araddr, local_slave_tx.arlen,
