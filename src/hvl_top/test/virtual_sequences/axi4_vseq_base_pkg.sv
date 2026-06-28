@@ -1,33 +1,29 @@
-`ifndef AXI4_VIRTUAL_SEQ_PKG_INCLUDED_
-`define AXI4_VIRTUAL_SEQ_PKG_INCLUDED_
+`ifndef AXI4_VSEQ_BASE_PKG_INCLUDED_
+`define AXI4_VSEQ_BASE_PKG_INCLUDED_
 
 //-----------------------------------------------------------------------------------------
-// Package: axi4_virtual_seq_pkg
+// Package: axi4_vseq_base_pkg
 // Description:
-// Includes all the files written to run the simulation
+// Holds the common virtual base sequence so it is compiled once and shared by all the
+// virtual sequence packages
 //-------------------------------------------------------------------------------------------
-package axi4_virtual_seq_pkg;
+package axi4_vseq_base_pkg;
 
   //-------------------------------------------------------
   // Import uvm package
   //-------------------------------------------------------
   `include "uvm_macros.svh"
   import uvm_pkg::*;
+  import axi4_globals_pkg::*;
   import axi4_master_pkg::*;
   import axi4_slave_pkg::*;
-  import axi4_master_seq_pkg::*;
-  import axi4_slave_seq_pkg::*;
-  import axi4_env_pkg::*; 
-  import axi4_globals_pkg::*;
+  import axi4_env_pkg::*;
+
   //-------------------------------------------------------
-  // Importing the required packages
+  // Importing the virtual base sequence
   //-------------------------------------------------------
   `include "axi4_virtual_base_seq.sv"
-  `include "axi4_virtual_slave_write.sv"
-  `include "axi4_virtual_slave_read.sv"
-  `include "axi4_virtual_slave_write_read.sv"
 
-endpackage : axi4_virtual_seq_pkg
+endpackage : axi4_vseq_base_pkg
 
 `endif
-

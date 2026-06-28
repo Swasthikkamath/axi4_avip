@@ -1,12 +1,12 @@
-`ifndef AXI4_TEST_PKG_INCLUDED_
-`define AXI4_TEST_PKG_INCLUDED_
+`ifndef AXI4_STANDALONE_MASTER_TEST_PKG_INCLUDED_
+`define AXI4_STANDALONE_MASTER_TEST_PKG_INCLUDED_
 
 //-----------------------------------------------------------------------------------------
 // Package: Test
 // Description:
 // Includes all the files written to run the simulation
 //--------------------------------------------------------------------------------------------
-package axi4_test_pkg;
+package axi4_standalone_master_test_pkg;
 
   //-------------------------------------------------------
   // Import uvm package
@@ -18,10 +18,10 @@ package axi4_test_pkg;
   import axi4_slave_pkg::*;
   import axi4_env_pkg::*;
   import axi4_master_seq_pkg::*;
-  import axi4_virtual_seq_pkg::*;
+  import axi4_standalone_master_vseq_pkg::*;
 
-  //including base_test for testing
-  `include "axi4_base_test.sv"
+  //base test comes from the shared base package
+  import axi4_test_base_pkg::*;
 
   //-------------------------------------------------------
   // Slave tests (standalone master RTL)
@@ -33,6 +33,6 @@ package axi4_test_pkg;
   `include "axi4_non_outstanding_slave_write_read_test.sv"
   `include "axi4_outstanding_slave_write_read_test.sv"
 
-endpackage : axi4_test_pkg
+endpackage : axi4_standalone_master_test_pkg
 
 `endif

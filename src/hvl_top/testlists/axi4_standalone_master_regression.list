@@ -1,14 +1,9 @@
-# Regression list for AXI4 SLAVE TRANSFERS (standalone master RTL)
-# Directed slave testcases
+# Regression list : standalone master RTL tests
+# Run on axi4StandaloneMasterRtlBranch (master RTL as DUT)
 
-# Write tests
 axi4_non_outstanding_slave_write_test
 axi4_outstanding_slave_write_test
-
-# Read tests
 axi4_non_outstanding_slave_read_test
 axi4_outstanding_slave_read_test
-
-# Write-Read tests
 axi4_non_outstanding_slave_write_read_test
 axi4_outstanding_slave_write_read_test
