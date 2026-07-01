@@ -373,7 +373,7 @@ task axi4_master_driver_proxy::axi4_write_task();
            rsp_wr = RSP :: type_id :: create("RSP OBJECT"); 
            rsp_wr.set_id_info(local_master_response_tx);
            axi_write_seq_item_port.put_response(local_master_response_tx); 
-           $display("SENDING RESP FROM MASTER for id is %d",local_master_response_tx.get_transaction_id());
+           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Sending response from master for transaction id = %0d",local_master_response_tx.get_transaction_id()),UVM_MEDIUM)
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Received_req_write_packet = \n %s",local_master_response_tx.sprint()),UVM_MEDIUM);
 
           `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_THREAD::Checking fifo size used= %0d",axi4_master_write_resp_fifo_h.used()),UVM_FULL); 

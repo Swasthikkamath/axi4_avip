@@ -26,7 +26,7 @@ interface axi4_master_driver_bfm(input bit                      aclk,
                                  output reg               [3:0] awregion,
                                  output reg                     awuser,
                                  output reg                     awvalid,
-                                 input    	                    awready,
+                                 input                         awready,
                                  //Write Data Channel Signals
                                  output reg    [DATA_WIDTH-1: 0] wdata,
                                  output reg [(DATA_WIDTH/8)-1:0] wstrb,
@@ -39,7 +39,7 @@ interface axi4_master_driver_bfm(input bit                      aclk,
                                  input      [1:0] bresp,
                                  input      [3:0] buser,
                                  input            bvalid,
-                                 output	reg       bready,
+                                 output reg       bready,
                                  //Read Address Channel Signals
                                  output reg               [3:0] arid,
                                  output reg [ADDRESS_WIDTH-1:0] araddr,
@@ -61,7 +61,7 @@ interface axi4_master_driver_bfm(input bit                      aclk,
                                  input                        rlast,
                                  input                  [3:0] ruser,
                                  input                        rvalid,
-                                 output	reg                   rready  
+                                 output reg                   rready  
                                 );  
   
   //-------------------------------------------------------
