@@ -12,7 +12,7 @@ interface axi4_slave_driver_bfm(input                     aclk    ,
                                 //Write_address_channel
                                 input [3:0]               awid    ,
                                 input [ADDRESS_WIDTH-1:0] awaddr  ,
-                                input [3: 0]              awlen   ,
+                                input [7: 0]              awlen   ,
                                 input [2: 0]              awsize  ,
                                 input [1: 0]              awburst ,
                                 input [1: 0]              awlock  ,
@@ -249,7 +249,6 @@ data_write_packet.awqos = axiSlaveCb.awqos;
     end
     `uvm_info(name,$sformatf("After_loop_of_Detecting_bready = %0d",axiSlaveCb.bready),UVM_HIGH)
     axiSlaveCb.bvalid <= 1'b0;
-  
   endtask : axi4_write_response_phase
 
   //-------------------------------------------------------
@@ -267,7 +266,7 @@ data_write_packet.awqos = axiSlaveCb.awqos;
     // Can make arready to zero 
      axiSlaveCb.arready <= 0;
 
-    while(axiSlaveCb.arvalid === 0 || $isunknown(axiSlaveCb.arvalid)) begin
+    while(axiSlaveCb.arvalid === 0 ||($isunknown(axiSlaveCb.arvalid))) begin
       @(axiSlaveCb);
     end
    
@@ -305,6 +304,7 @@ data_write_packet.awqos = axiSlaveCb.awqos;
   task axi4_read_data_phase (inout axi4_read_transfer_char_s data_read_packet);
     int j1;
     int amount;
+     @(axiSlaveCb);
       axiSlaveCb.rdata<=data_read_packet.rdata[0];
       axiSlaveCb.rresp<=data_read_packet.rresp[0];
 

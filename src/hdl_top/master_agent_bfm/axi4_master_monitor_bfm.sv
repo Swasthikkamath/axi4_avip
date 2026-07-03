@@ -12,7 +12,7 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
                                  //Write Address Channel Signals
                                  input  [3:0]awid,
                                  input  [ADDRESS_WIDTH-1:0]awaddr,
-                                 input  [3:0]awlen,
+                                 input  [7:0]awlen,
                                  input  [2:0]awsize,
                                  input  [1:0]awburst,
                                  input  [1:0]awlock,
@@ -176,6 +176,7 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
     req.arlen   = masterMonCb.arlen;
     req.arsize  = masterMonCb.arsize;
     req.arburst = masterMonCb.arburst;
+    `uvm_info("AXI4_MASTER_MON_BFM",$sformatf("Sampled read address channel: arburst = %0d",req.arburst),UVM_MEDIUM)
     req.arlock  = masterMonCb.arlock;
     req.arcache = masterMonCb.arcache;
     req.arprot  = masterMonCb.arprot;
@@ -196,7 +197,7 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
       do begin
         @(masterMonCb);
       end while((masterMonCb.rvalid!==1 || masterMonCb.rready!==1));
-  
+
       req.rid      = masterMonCb.rid;
       req.rdata[0] = masterMonCb.rdata;
       req.ruser    = masterMonCb.ruser;
