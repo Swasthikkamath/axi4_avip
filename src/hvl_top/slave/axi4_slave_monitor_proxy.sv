@@ -193,7 +193,7 @@ task axi4_slave_monitor_proxy::axi4_slave_write_response();
     axi4_slave_seq_item_converter::to_write_class(struct_write_packet,req_wr);
     
     `uvm_info(get_type_name(),$sformatf("Sending out write response, bid = %0d",req_wr.bid),UVM_MEDIUM)
-    //clone and publish the clone to the analysis port 
+    //clone and publish the clone to the analysis port
     $cast(axi4_slave_tx_clone_packet,req_wr.clone());
     `uvm_info(get_type_name(),$sformatf("Packet received from axi4_slave_write_response is \n %s",axi4_slave_tx_clone_packet.sprint()),UVM_HIGH);
     
