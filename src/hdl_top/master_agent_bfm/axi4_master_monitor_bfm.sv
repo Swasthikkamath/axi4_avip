@@ -197,7 +197,7 @@ interface axi4_master_monitor_bfm(input bit aclk, input bit aresetn,
       do begin
         @(masterMonCb);
       end while((masterMonCb.rvalid!==1 || masterMonCb.rready!==1));
- 
+
       req.rid      = masterMonCb.rid;
       req.rdata[0] = masterMonCb.rdata;
       req.ruser    = masterMonCb.ruser;

@@ -94,7 +94,6 @@ interface axi4_master_driver_bfm(input bit                      aclk,
   task wait_for_aresetn();
     @(negedge aresetn);
     `uvm_info(name,$sformatf("SYSTEM RESET DETECTED"),UVM_HIGH)
-
     @(posedge aresetn);
     `uvm_info(name,$sformatf("SYSTEM RESET DEACTIVATED"),UVM_HIGH)
   endtask : wait_for_aresetn
@@ -222,7 +221,6 @@ task axi4_write_address_channel_task (inout axi4_write_transfer_char_s data_writ
     @(axiMasterCb);
     
     `uvm_info(name,$sformatf("DRIVE TO READ ADDRESS CHANNEL"),UVM_HIGH)
-
     axiMasterCb.arid     <= data_read_packet.arid;
     axiMasterCb.araddr   <= data_read_packet.araddr;
     axiMasterCb.arlen    <= data_read_packet.arlen;
@@ -242,7 +240,6 @@ task axi4_write_address_channel_task (inout axi4_write_transfer_char_s data_writ
       data_read_packet.wait_count_read_address_channel++;
     end
     while(axiMasterCb.arready !== 1 || $isunknown(axiMasterCb.arready));
-
     `uvm_info(name,$sformatf("After_loop_of_Detecting_awready = %0d, awvalid = %0d",awready,awvalid),UVM_HIGH)
     axiMasterCb.arvalid <= 1'b0;
   endtask : axi4_read_address_channel_task
@@ -263,7 +260,7 @@ task axi4_write_address_channel_task (inout axi4_write_transfer_char_s data_writ
       //Driving rready as low initially
       axiMasterCb.rready  <= 0;
     end while(axiMasterCb.rvalid === 1'b0 || $isunknown(axiMasterCb.rvalid));
-    
+
     repeat(data_read_packet.no_of_wait_states)begin
       `uvm_info(name,$sformatf("DRIVING WAIT STATES in read data channel :: %0d",data_read_packet.no_of_wait_states),UVM_HIGH);
       @(axiMasterCb);
@@ -301,7 +298,6 @@ task axi4_write_address_channel_task (inout axi4_write_transfer_char_s data_writ
     axiMasterCb.wvalid   <= 1'b0;
     axiMasterCb.bready   <= 1'b0;
     axiMasterCb.arvalid  <= 1'b0;
-    axiMasterCb.rready   <= 1'b0;
 
     axiMasterCb.awid     <= 'b0;
     axiMasterCb.awaddr   <= 'b0;
