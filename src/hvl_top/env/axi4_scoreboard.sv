@@ -294,7 +294,7 @@
     axi4_slave_read_address_analysis_fifo = new("axi4_slave_read_address_analysis_fifo",this);
     axi4_slave_read_data_analysis_fifo = new("axi4_slave_read_data_analysis_fifo",this);
 
-    referenceFifo = new("referenceFifo",this,16000);
+    referenceFifo = new("referenceFifo",this,1600000);
     write_address_key = new(1);
     write_data_key = new(1);
     write_response_key = new(1);
@@ -594,9 +594,9 @@
                 end
                 if(masterArrayDataQueue[index][i].strobe[k]==1)begin
                   `uvm_info(get_type_name(),$sformatf("Data pushed into reference FIFO = %h",masterArrayDataQueue[index][i].data[8*k +:8]),UVM_HIGH)
+                  tempAddress++;
                   referenceFifo.put(masterArrayDataQueue[index][i].data[8*k +:8]); 
                 end 
-                tempAddress++;
               end  
             end  
             2'b 01: begin 

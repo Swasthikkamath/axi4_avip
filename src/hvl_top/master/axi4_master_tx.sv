@@ -180,7 +180,21 @@ class axi4_master_tx extends uvm_sequence_item;
   //Variable: transfer_type
   //Used to the determine the type of the transfer
   rand transfer_type_e transfer_type;
-  
+
+  //-------------------------------------------------------
+  // Read-vs-write address coordination (outstanding-aware)
+  //-------------------------------------------------------
+  //Snapshots filled by the sequence just before randomize, from a runtime
+  //tracker keyed by write transaction id:
+  //  avoid_base/avoid_span : writes still in-flight (no BRESP) -> read stays away
+  //  readback_base         : writes whose BRESP (get_response) returned -> safe
+  int avoid_base   [$];   //in-flight write bases (non-rand, set by seq)
+  int avoid_span   [$];   //in-flight write spans + guard (non-rand)
+  int readback_base[$];   //committed write bases (non-rand)
+
+  //Knob used by the solver for READ transactions
+  rand bit read_from_written;   //1 = read back a committed addr, 0 = fresh miss
+
   //Variable : no_of_wait_states
   //Used to count number of wait states
   rand int no_of_wait_states;
@@ -285,6 +299,21 @@ class axi4_master_tx extends uvm_sequence_item;
   //Adding constraint to select the lock transfer type
   constraint arlock_c4 { soft arlock == READ_NORMAL_ACCESS;}
 
+  //-------------------------------------------------------
+  // Read address selection : readback a written addr, else a non-overlapping miss
+  //-------------------------------------------------------
+  constraint read_addr_c {
+    solve arsize, arlen before araddr;   //read burst span known before placing addr
+    if (tx_type == READ) {
+      //never issue a read that comes near an in-flight (not-yet-BRESP) write
+      foreach (avoid_base[i])
+        (araddr + (arlen+1)*(2**arsize) <= avoid_base[i]) ||
+        (araddr >= avoid_base[i] + avoid_span[i]);
+      //when reading back, land exactly on a committed write base
+      if (read_from_written && readback_base.size() > 0)
+        araddr inside {readback_base};
+    }
+  }
 
   //-------------------------------------------------------
   // Memory Constraints

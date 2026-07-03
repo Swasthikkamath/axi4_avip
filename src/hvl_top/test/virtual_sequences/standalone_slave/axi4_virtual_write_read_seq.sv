@@ -55,14 +55,10 @@ task axi4_virtual_write_read_seq::body();
   `uvm_info(get_type_name(), $sformatf("Starting WRITE+READ virtual sequence | wr_size=%s rd_size=%s wr_burst=%s rd_burst=%s type=%s",
             writeTranSize.name(), readTranSize.name(), writeBurstType.name(), readBurstType.name(), writeTransferType.name()), UVM_LOW)
 
-  fork
-    begin: T1_BK_WRITE
-        axi4_master_write_seq_h.start(p_sequencer.axi4_master_write_seqr_h);
-    end
-    begin: T2_BK_READ
-        axi4_master_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
-    end
-  join
+  //Sequential: write completes fully (all BRESP) before read is issued,
+  //so every read targets already-committed data (no read-vs-write hazard)
+  axi4_master_write_seq_h.start(p_sequencer.axi4_master_write_seqr_h);
+  axi4_master_read_seq_h.start(p_sequencer.axi4_master_read_seqr_h);
 
  endtask : body
 

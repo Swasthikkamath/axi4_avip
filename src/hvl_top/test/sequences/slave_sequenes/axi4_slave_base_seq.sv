@@ -73,9 +73,11 @@ task axi4_slave_base_seq::body();
 
          fork
            begin 
+             RSP rsp;
              int id = writeIdQueue[writeCnt++];
              get_response(rsp,id);
              numWriteGotResp++;
+             $display("write num got resp");
            end 
          join_none 
       end
@@ -94,11 +96,11 @@ task axi4_slave_base_seq::body();
          end
 
          finish_item(req);
-
          readIdQueue[readCnt] = req.get_transaction_id();
 
          fork
            begin
+             RSP rsp;
              int id = readIdQueue[readCnt++];
              get_response(rsp,id);
              numReadGotResp++;
@@ -108,7 +110,6 @@ task axi4_slave_base_seq::body();
 
       wait(numReadGotResp == MASTER_TRANSACTION_READ_ISSUE_COUNT); 
   end
-
   `uvm_info(get_type_name(), $sformatf("Randomized transaction:\n%s", req.sprint()), UVM_HIGH)
 
   `uvm_info(get_type_name(), $sformatf("%s transaction sent to driver", writeOrRead.name()), UVM_MEDIUM)

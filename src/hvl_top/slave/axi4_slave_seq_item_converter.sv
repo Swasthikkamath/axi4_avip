@@ -209,12 +209,12 @@ function void axi4_slave_seq_item_converter::to_write_class(input axi4_write_tra
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("after writnig awqos =  %0h",output_conv_h.awqos),UVM_FULL);
 
   
-  for(int i=0;i<input_conv_h.wdata[i];i++) begin
+  for(int i=0;i<$size(input_conv_h.wdata);i++) begin
       output_conv_h.wdata[i] = input_conv_h.wdata[i];
   end
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("after writnig wdata to class = \n %0s",output_conv_h.sprint()),UVM_FULL);
 
-  for(int i=0;i<input_conv_h.wdata[i];i++) begin
+  for(int i=0;i<$size(input_conv_h.wdata);i++) begin
       output_conv_h.wstrb[i] = input_conv_h.wstrb[i];
   end
   `uvm_info("axi4_slave_seq_item_conv_class",$sformatf("after writnig wstrb to class = \n %0s",output_conv_h.sprint()),UVM_FULL);

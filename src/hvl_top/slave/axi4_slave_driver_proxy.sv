@@ -122,12 +122,12 @@
     axi_read_seq_item_port                    = new("axi_read_seq_item_port", this);
     axi_write_rsp_port                        = new("axi_write_rsp_port", this);
     axi_read_rsp_port                         = new("axi_read_rsp_port", this);
-    axi4_slave_write_addr_fifo_h              = new("axi4_slave_write_addr_fifo_h",this,16);
-    axi4_slave_write_data_in_fifo_h           = new("axi4_slave_write_data_in_fifo_h",this,16);
-    axi4_slave_write_response_fifo_h          = new("axi4_slave_write_response_fifo_h",this,16);
-    axi4_slave_write_data_out_fifo_h          = new("axi4_slave_write_data_out_fifo_h",this,16);
-    axi4_slave_read_addr_fifo_h               = new("axi4_slave_read_addr_fifo_h",this,16);
-    axi4_slave_read_data_in_fifo_h            = new("axi4_slave_read_data_in_fifo_h",this,16);
+    axi4_slave_write_addr_fifo_h              = new("axi4_slave_write_addr_fifo_h",this,1600);
+    axi4_slave_write_data_in_fifo_h           = new("axi4_slave_write_data_in_fifo_h",this,1600);
+    axi4_slave_write_response_fifo_h          = new("axi4_slave_write_response_fifo_h",this,1600);
+    axi4_slave_write_data_out_fifo_h          = new("axi4_slave_write_data_out_fifo_h",this,1600);
+    axi4_slave_read_addr_fifo_h               = new("axi4_slave_read_addr_fifo_h",this,1600);
+    axi4_slave_read_data_in_fifo_h            = new("axi4_slave_read_data_in_fifo_h",this,1600);
     semaphore_write_key                       = new(1);
     semaphore_rsp_write_key                   = new(1);
     semaphore_read_key                        = new(1);
@@ -205,10 +205,6 @@
           `uvm_info(get_type_name(), $sformatf("from_write_class:: struct_cfg =  \n %0p",struct_cfg),UVM_HIGH); 
           axi4_slave_drv_bfm_h.axi4_write_address_phase(struct_write_packet);
           axi4_slave_seq_item_converter::to_write_class(struct_write_packet,req_wr);
-          `uvm_info(get_type_name(), $sformatf("AW accepted | awid=%0d awaddr=0x%0h awlen=%0d awsize=%s awburst=%s",
-                    local_slave_addr_tx.awid, local_slave_addr_tx.awaddr, local_slave_addr_tx.awlen,
-                    local_slave_addr_tx.awsize.name(), local_slave_addr_tx.awburst.name()), UVM_MEDIUM)
-          `uvm_info(get_type_name(), $sformatf("Write address packet:\n%s",local_slave_addr_tx.sprint()), UVM_HIGH)
           axiSlaveAddressQueue.push_back(req_wr);
           `uvm_info(get_type_name(),$sformatf("WRITE_ADDRESS_CHANNEL::Received write address packet, awid = %0d",req_wr.awid),UVM_MEDIUM)
           axiSlaveIdQueue.push_back(req_wr.awid);
@@ -306,6 +302,7 @@
             axi4_slave_drv_bfm_h.axi4_write_response_phase(struct_write_packet,struct_cfg,bid_local);
           end 
           else begin
+            wait(axiSlaveDataQueue.size()>0);
             local_slave_addr_tx = axiSlaveAddressQueue.pop_front();
             local_slave_data_tx = axiSlaveDataQueue.pop_front();
             `uvm_info(get_type_name(),$sformatf("WRITE_RESPONSE_CHANNEL::Slave driver sending out bid = %0d",local_slave_addr_tx.awid),UVM_MEDIUM)
@@ -406,10 +403,6 @@
           axiReadSlaveAddressQueue.push_back(req_rd);
           axiReadSlaveIdQueue.push_back(req_rd.arid);
           waitStates++; 
-          `uvm_info(get_type_name(), $sformatf("AR accepted | arid=%0d araddr=0x%0h arlen=%0d arsize=%s arburst=%s",
-                    local_slave_tx.arid, local_slave_tx.araddr, local_slave_tx.arlen,
-                    local_slave_tx.arsize.name(), local_slave_tx.arburst.name()), UVM_MEDIUM)
-          `uvm_info(get_type_name(), $sformatf("Read address packet:\n%s",local_slave_tx.sprint()), UVM_HIGH)
 
         end : READ_ADDRESS_CHANNEL
 
@@ -501,15 +494,23 @@
     automatic int addr=struct_write_packet.awaddr;
     struct_write_packet.print(); 
     if(struct_write_packet.awburst == WRITE_FIXED) begin
+      int unalignedAmount;
+      if(addr % (2**struct_write_packet.awsize) != 0) begin
+        unalignedAmount = addr - ((addr/(2**struct_write_packet.awsize))*(2**struct_write_packet.awsize));
+        `uvm_info(get_type_name(),$sformatf("THE WRITE ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,struct_write_packet.awsize,addr),UVM_HIGH)
+      end
+
       for(int j=0;j<(struct_write_packet.awlen+1);j++)begin
         `uvm_info("DEBUG_MEMORY_WRITE",$sformatf("memory_task_awlen=%d",struct_write_packet.awlen),UVM_HIGH)
-        for(int strb=0,k=0;strb<((2**struct_write_packet.awsize));strb++) begin
+        if(j!=0 )
+          unalignedAmount =0;
+        for(int strb=0,k=0;strb<((2**(struct_write_packet.awsize))-unalignedAmount);strb++) begin
           `uvm_info("DEBUG_MEMORY_WRITE", $sformatf("task_memory_write inside for loop wstrb = %0h,k=%0d",struct_write_packet.wstrb[strb],k), UVM_HIGH);
           k = addr % (DATA_WIDTH/8);
           if(struct_write_packet.wstrb[j][k] == 1) begin
-            axi4_slave_mem_h.fifo_write(struct_write_packet.wdata[j][8*k+7 -: 8]);
+            addr++;
+            axi4_slave_mem_h.fifo_write(struct_write_packet.wdata[j][8*k +: 8]);
           end
-          addr++;
         end
       end
     end 
@@ -529,7 +530,7 @@
           k = addr % (DATA_WIDTH/8);
           if(struct_write_packet.wstrb[j][k] == 1) begin
             `uvm_info(get_type_name(),$sformatf("THE BYTE WRITTEN TO THE MEMORY IS %h AND THE ADDRESS IS %0d",struct_write_packet.wdata[j][8*k+7 -: 8],addr),UVM_HIGH)
-            axi4_slave_mem_h.mem_write(addr,struct_write_packet.wdata[j][8*k+7 -: 8]);
+            axi4_slave_mem_h.mem_write(addr,struct_write_packet.wdata[j][8*k +: 8]);
           end
           addr++;
         end
@@ -556,7 +557,7 @@
           if(struct_write_packet.wstrb[j][k] == 1) begin
             if(addr < end_addr)  begin
               `uvm_info(get_type_name(),$sformatf("THE BYTE WRITTEN TO THE MEMORY IS %h AND THE ADDRESS IS %0d",struct_write_packet.wdata[j][8*k+7 -: 8],addr),UVM_HIGH) 
-              axi4_slave_mem_h.mem_write(addr,struct_write_packet.wdata[j][8*k+7 -: 8]);
+              axi4_slave_mem_h.mem_write(addr,struct_write_packet.wdata[j][8*k +: 8]);
             end 
           end
           addr++;
@@ -578,11 +579,22 @@
     struct_read_packet.arlen = read_pkt.arlen;
     struct_read_packet.rid = read_pkt.arid;
     if(read_pkt.arburst == READ_FIXED) begin
+      int unalignedAmount;
       for(int j=0,int k=0;j<(read_pkt.arlen+1);j++)begin
+        if(read_pkt.araddr % (2**read_pkt.arsize) != 0) begin
+          unalignedAmount = read_pkt.araddr - ((read_pkt.araddr/(2**read_pkt.arsize))*(2**read_pkt.arsize));
+          `uvm_info(get_type_name(),$sformatf("THE READ ADDRESS IS UNALIGNED BY AN AMOUNT %0d WHEN THE ARSIZE IS %0d AND ADDRESS IS %0d",unalignedAmount,read_pkt.arsize,addr),UVM_HIGH)
+
+         end
+          
+        if(j != 0)
+          unalignedAmount =0;
+
         `uvm_info("DEBUG_MEMORY_WRITE",$sformatf("memory_task_arlen=%d",read_pkt.arlen),UVM_HIGH)
-        for(int strb=0;strb<((2**(read_pkt.arsize)));strb++) begin
+        for(int strb=0;strb<((2**(read_pkt.arsize))-unalignedAmount);strb++) begin
           k = addr % (DATA_WIDTH/8);
-          axi4_slave_mem_h.fifo_read(struct_read_packet.rdata[0][8*k+7 -: 8]);
+          axi4_slave_mem_h.fifo_read(struct_read_packet.rdata[0][8*k +: 8]);
+          addr++;
         end 
 
         if((read_pkt.araddr+((2**(read_pkt.arsize))))> axi4_slave_agent_cfg_h.max_address) begin
@@ -614,7 +626,7 @@
 
           if(axi4_slave_mem_h.is_slave_addr_exists(addr) && read_pkt.araddr inside {[axi4_slave_agent_cfg_h.min_address :axi4_slave_agent_cfg_h.max_address]})begin
 
-            axi4_slave_mem_h.mem_read(addr,struct_read_packet.rdata[0][8*k+7 -: 8]);
+            axi4_slave_mem_h.mem_read(addr,struct_read_packet.rdata[0][8*k +: 8]);
             addr++;
             `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA EXISTS READ FROM %0d AND READ DATA IS %0d",addr,struct_read_packet.rdata[0][8*k+7 -: 8]),UVM_HIGH)
 
@@ -622,7 +634,7 @@
           else begin 
             struct_read_packet.rresp[0] = READ_SLVERR;
             `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",addr),UVM_HIGH)
-            struct_read_packet.rdata[0][8*k+7 -:8] = '0;
+            struct_read_packet.rdata[0][8*k +:8] = '0;
             addr++;
           end 
         end
@@ -653,7 +665,7 @@
               struct_read_packet.rresp[0] = READ_SLVERR; 
             k = k_t % (DATA_WIDTH/8);
             if(axi4_slave_mem_h.is_slave_addr_exists(k_t))begin  
-              axi4_slave_mem_h.mem_read(k_t,struct_read_packet.rdata[0][8*k+7 -: 8]);
+              axi4_slave_mem_h.mem_read(k_t,struct_read_packet.rdata[0][8*k +: 8]);
               `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA EXISTS READ FROM %0d AND READ DATA IS %0d",k_t,struct_read_packet.rdata[0][8*k+7 -: 8]),UVM_HIGH)
               k_t++;
             end 
@@ -661,7 +673,7 @@
               `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",k_t),UVM_HIGH)
 
               struct_read_packet.rresp[0] = READ_SLVERR;
-              struct_read_packet.rdata[0][8*k+7 -:8] = '0;
+              struct_read_packet.rdata[0][8*k +:8] = '0;
               k_t++;
             end 
             if(k_t == end_addr) 
