@@ -69,7 +69,7 @@ package axi4_globals_pkg;
   parameter int OUTSTANDING_FIFO_DEPTH = 16;
   parameter outstanding = 1; 
   parameter writeReadOrdering = 1;
-  parameter activeTransactionCapacity = 2;
+  parameter activeTransactionCapacity = 1;
  
   //-------------------------------------------------------
   // Enums used in axi4_avip are given below

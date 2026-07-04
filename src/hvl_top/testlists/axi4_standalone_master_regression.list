@@ -1,6 +1,7 @@
 # Regression list : standalone master RTL tests
 # Run on axi4StandaloneMasterRtlBranch (master RTL as DUT)
 
+#run outstanding tests only when master can issue outstanding transactions
 axi4_non_outstanding_slave_write_test
 axi4_outstanding_slave_write_test
 axi4_non_outstanding_slave_read_test
