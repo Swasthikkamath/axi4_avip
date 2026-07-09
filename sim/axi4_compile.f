@@ -26,13 +26,13 @@
 ../../src/hvl_top/env/axi4_env_pkg.sv
 ../../src/hvl_top/test/virtual_sequences/axi4_vseq_base_pkg.sv
 // Mode-selected test-package families (toggled in place by 'make compile MODE=...').
-// Exactly one family is active at a time; do not remove the //@MODE= tags.
-//../../src/hvl_top/test/virtual_sequences/standalone_master/axi4_standalone_master_vseq_pkg.sv //@MODE=master
-//../../src/hvl_top/test/virtual_sequences/standalone_slave/axi4_standalone_slave_vseq_pkg.sv //@MODE=slave
+ Exactly one family is active at a time; do not remove the //@MODE= tags.
+../../src/hvl_top/test/virtual_sequences/standalone_master/axi4_standalone_master_vseq_pkg.sv //@MODE=master
+../../src/hvl_top/test/virtual_sequences/standalone_slave/axi4_standalone_slave_vseq_pkg.sv //@MODE=slave
 ../../src/hvl_top/test/virtual_sequences/back_to_back/axi4_back_to_back_vseq_pkg.sv //@MODE=b2b
 ../../src/hvl_top/test/axi4_test_base_pkg.sv
-//../../src/hvl_top/test/standalone_master/axi4_standalone_master_test_pkg.sv //@MODE=master
-//../../src/hvl_top/test/standalone_slave/axi4_standalone_slave_test_pkg.sv //@MODE=slave
+../../src/hvl_top/test/standalone_master/axi4_standalone_master_test_pkg.sv //@MODE=master
+../../src/hvl_top/test/standalone_slave/axi4_standalone_slave_test_pkg.sv //@MODE=slave
 ../../src/hvl_top/test/back_to_back/axi4_back_to_back_test_pkg.sv //@MODE=b2b
 ../../src/hdl_top/axi4_interface/axi4_if.sv
 ../../src/hdl_top/master_agent_bfm/axi4_master_driver_bfm.sv
@@ -44,4 +44,5 @@
 ../../src/hdl_top/hdl_top.sv
 ../../src/hvl_top/hvl_top.sv
 ../../src/hdl_top/master_assertions.sv
+../../src/RTL/axiSlave.v
 ../../src/hdl_top/slave_assertions.sv

@@ -14,45 +14,45 @@ import axi4_globals_pkg::*;
 interface axi4_master_driver_bfm(input bit                      aclk, 
                                  input bit                      aresetn,
                                  //Write Address Channel Signals
-                                 output reg               [3:0] awid,
-                                 output reg [ADDRESS_WIDTH-1:0] awaddr,
-                                 output reg               [7:0] awlen,
-                                 output reg               [2:0] awsize,
-                                 output reg               [1:0] awburst,
-                                 output reg               [1:0] awlock,
-                                 output reg               [3:0] awcache,
-                                 output reg               [2:0] awprot,
-                                 output reg               [3:0] awqos,
-                                 output reg               [3:0] awregion,
-                                 output reg                     awuser,
-                                 output reg                     awvalid,
+                                 output wire               [3:0] awid,
+                                 output wire [ADDRESS_WIDTH-1:0] awaddr,
+                                 output wire               [7:0] awlen,
+                                 output wire               [2:0] awsize,
+                                 output wire               [1:0] awburst,
+                                 output wire               [1:0] awlock,
+                                 output wire               [3:0] awcache,
+                                 output wire               [2:0] awprot,
+                                 output wire               [3:0] awqos,
+                                 output wire               [3:0] awregion,
+                                 output wire                     awuser,
+                                 output wire                     awvalid,
                                  input                         awready,
                                  //Write Data Channel Signals
-                                 output reg    [DATA_WIDTH-1: 0] wdata,
-                                 output reg [(DATA_WIDTH/8)-1:0] wstrb,
-                                 output reg                      wlast,
-                                 output reg                [3:0] wuser,
-                                 output reg                      wvalid,
+                                 output wire    [DATA_WIDTH-1: 0] wdata,
+                                 output wire [(DATA_WIDTH/8)-1:0] wstrb,
+                                 output wire                      wlast,
+                                 output wire                [3:0] wuser,
+                                 output wire                      wvalid,
                                  input                           wready,
                                  //Write Response Channel Signals
                                  input      [3:0] bid,
                                  input      [1:0] bresp,
                                  input      [3:0] buser,
                                  input            bvalid,
-                                 output reg       bready,
+                                 output wire       bready,
                                  //Read Address Channel Signals
-                                 output reg               [3:0] arid,
-                                 output reg [ADDRESS_WIDTH-1:0] araddr,
-                                 output reg               [7:0] arlen,
-                                 output reg               [2:0] arsize,
-                                 output reg               [1:0] arburst,
-                                 output reg               [1:0] arlock,
-                                 output reg               [3:0] arcache,
-                                 output reg               [2:0] arprot,
-                                 output reg               [3:0] arqos,
-                                 output reg               [3:0] arregion,
-                                 output reg               [3:0] aruser,
-                                 output reg                     arvalid,
+                                 output wire               [3:0] arid,
+                                 output wire [ADDRESS_WIDTH-1:0] araddr,
+                                 output wire               [7:0] arlen,
+                                 output wire               [2:0] arsize,
+                                 output wire               [1:0] arburst,
+                                 output wire               [1:0] arlock,
+                                 output wire               [3:0] arcache,
+                                 output wire               [2:0] arprot,
+                                 output wire               [3:0] arqos,
+                                 output wire               [3:0] arregion,
+                                 output wire               [3:0] aruser,
+                                 output wire                     arvalid,
                                  input                          arready,
                                  //Read Data Channel Signals
                                  input                  [3:0] rid,
@@ -61,7 +61,7 @@ interface axi4_master_driver_bfm(input bit                      aclk,
                                  input                        rlast,
                                  input                  [3:0] ruser,
                                  input                        rvalid,
-                                 output reg                   rready  
+                                 output wire                 rready  
                                 );  
   
   //-------------------------------------------------------
@@ -294,39 +294,39 @@ task axi4_write_address_channel_task (inout axi4_write_transfer_char_s data_writ
   endtask : axi4_read_data_channel_task
 
   task default_values();
-    axiMasterCb.awvalid  <= 1'b0;
-    axiMasterCb.wvalid   <= 1'b0;
-    axiMasterCb.bready   <= 1'b0;
-    axiMasterCb.arvalid  <= 1'b0;
+    axiMasterCb.awvalid  <= 1'bz;
+    axiMasterCb.wvalid   <= 1'bz;
+    axiMasterCb.bready   <= 1'bz;
+    axiMasterCb.arvalid  <= 1'bz;
 
-    axiMasterCb.awid     <= 'b0;
-    axiMasterCb.awaddr   <= 'b0;
-    axiMasterCb.awlen    <= 'b0;
-    axiMasterCb.awsize   <= 'b0;
-    axiMasterCb.awburst  <= 'b0;
-    axiMasterCb.awlock   <= 'b0;
-    axiMasterCb.awcache  <= 'b0;
-    axiMasterCb.awprot   <= 'b0;
-    axiMasterCb.awqos    <= 'b0;
-    axiMasterCb.awregion <= 'b0;
-    axiMasterCb.awuser   <= 'b0;
+    axiMasterCb.awid     <= 'bz;
+    axiMasterCb.awaddr   <= 'bz;
+    axiMasterCb.awlen    <= 'bz;
+    axiMasterCb.awsize   <= 'bz;
+    axiMasterCb.awburst  <= 'bz;
+    axiMasterCb.awlock   <= 'bz;
+    axiMasterCb.awcache  <= 'bz;
+    axiMasterCb.awprot   <= 'bz;
+    axiMasterCb.awqos    <= 'bz;
+    axiMasterCb.awregion <= 'bz;
+    axiMasterCb.awuser   <= 'bz;
     
-    axiMasterCb.wdata    <= 'b0;
-    axiMasterCb.wstrb    <= 'b0;
-    axiMasterCb.wlast    <= 'b0;
-    axiMasterCb.wuser    <= 'b0;
+    axiMasterCb.wdata    <= 'bz;
+    axiMasterCb.wstrb    <= 'bz;
+    axiMasterCb.wlast    <= 'bz;
+    axiMasterCb.wuser    <= 'bz;
 
-    axiMasterCb.arid     <= 'b0;
-    axiMasterCb.araddr   <= 'b0;
-    axiMasterCb.arlen    <= 'b0;
-    axiMasterCb.arsize   <= 'b0;
-    axiMasterCb.arburst  <= 'b0;
-    axiMasterCb.arlock   <= 'b0;
-    axiMasterCb.arcache  <= 'b0;
-    axiMasterCb.arprot   <= 'b0;
-    axiMasterCb.arqos    <= 'b0;
-    axiMasterCb.arregion <= 'b0;
-    axiMasterCb.aruser   <= 'b0;
+    axiMasterCb.arid     <= 'bz;
+    axiMasterCb.araddr   <= 'bz;
+    axiMasterCb.arlen    <= 'bz;
+    axiMasterCb.arsize   <= 'bz;
+    axiMasterCb.arburst  <= 'bz;
+    axiMasterCb.arlock   <= 'bz;
+    axiMasterCb.arcache  <= 'bz;
+    axiMasterCb.arprot   <= 'bz;
+    axiMasterCb.arqos    <= 'bz;
+    axiMasterCb.arregion <= 'bz;
+    axiMasterCb.aruser   <= 'bz;
   endtask : default_values
 
 endinterface : axi4_master_driver_bfm

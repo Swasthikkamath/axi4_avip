@@ -60,7 +60,7 @@ class axi4_slave_coverage extends uvm_subscriber#(axi4_slave_tx);
 
     AWID_CP : coverpoint packet.awid {
       option.comment = "Write Address ID values";
-      bins AWID[] = {[0:16]};
+      bins AWID[] = {[0:15]};
     }
 
     BRESP_CP : coverpoint packet.bresp {
@@ -112,17 +112,17 @@ class axi4_slave_coverage extends uvm_subscriber#(axi4_slave_tx);
 
     BID_CP : coverpoint packet.bid {
       option.comment = "Write Response values";
-      bins BID[] = {[0:16]};
+      bins BID[] = {[0:15]};
     }
 
     ARID_CP : coverpoint packet.rid {
       option.comment = "Read Address ID values";
-      bins ARID[] = {[0:16]};
+      bins ARID[] = {[0:15]};
     }
 
     RID_CP : coverpoint packet.rid {
       option.comment = "Read ID values";
-      bins RID[] = {[0:16]};
+      bins RID[] = {[0:15]};
     }
 
     RRESP_CP : coverpoint packet.rresp {

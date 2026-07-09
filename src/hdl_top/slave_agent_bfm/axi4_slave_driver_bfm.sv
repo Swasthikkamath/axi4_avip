@@ -20,7 +20,7 @@ interface axi4_slave_driver_bfm(input                     aclk    ,
                                 input [2: 0]              awprot  ,
                                 input [3: 0]              awqos   ,  
                                 input                     awvalid ,
-                                output reg               awready ,
+                                output wire               awready ,
 
                                 //Write_data_channel
                                 input [DATA_WIDTH-1: 0]     wdata  ,
@@ -28,13 +28,13 @@ interface axi4_slave_driver_bfm(input                     aclk    ,
                                 input                       wlast  ,
                                 input [3: 0]                wuser  ,
                                 input                       wvalid ,
-                                output reg                 wready ,
+                                output wire                wready ,
 
                                 //Write Response Channel
-                                output reg [3:0]            bid    ,
-                                output reg [1:0]            bresp  ,
-                                output reg [3:0]            buser  ,
-                                output reg                  bvalid ,
+                                output wire [3:0]            bid    ,
+                                output wire [1:0]            bresp  ,
+                                output wire [3:0]            buser  ,
+                                output wire                  bvalid ,
                                 input                      bready ,
 
                                 //Read Address Channel
@@ -50,15 +50,15 @@ interface axi4_slave_driver_bfm(input                     aclk    ,
                                 input [3:0]                 arregion,
                                 input [3:0]                 aruser  ,
                                 input                       arvalid ,
-                                output reg                  arready ,
+                                output wire                  arready ,
 
                                 //Read Data Channel
-                                output reg [3:0]                rid    ,
-                                output reg [DATA_WIDTH-1: 0]    rdata  ,
-                                output reg [1:0]                rresp  ,
-                                output reg                      rlast  ,
-                                output reg [3:0]                ruser  ,
-                                output reg                      rvalid ,
+                                output wire [3:0]                rid    ,
+                                output wire [DATA_WIDTH-1: 0]    rdata  ,
+                                output wire [1:0]                rresp  ,
+                                output wire                      rlast  ,
+                                output wire [3:0]                ruser  ,
+                                output wire                      rvalid ,
                                 input                          rready  
                               ); 
                               
@@ -279,7 +279,7 @@ data_write_packet.awqos = axiSlaveCb.awqos;
     `uvm_info("SLAVE_DRIVER_RADDR_PHASE", $sformatf("outside of arvalid"), UVM_NONE); 
     
     // Sample the values
-    arready         <= 1      ;
+    axiSlaveCb.arready         <= 1      ;
 
     data_read_packet.arid    = axiSlaveCb.arid     ;
     data_read_packet.araddr  = axiSlaveCb.araddr   ;
@@ -322,21 +322,21 @@ data_write_packet.awqos = axiSlaveCb.awqos;
   endtask : axi4_read_data_phase
 
   task default_values();
-    axiSlaveCb.awready <= 0;
-    axiSlaveCb.wready  <= 0;
-    axiSlaveCb.rvalid  <= 0;
-    axiSlaveCb.bvalid  <= 0;
-    axiSlaveCb.arready <= 0;
+    axiSlaveCb.awready <= 'b z;
+    axiSlaveCb.wready  <= 'b z;
+    axiSlaveCb.rvalid  <= 'b z;
+    axiSlaveCb.bvalid  <= 'b z;
+    axiSlaveCb.arready <= 'b z;
 
-    axiSlaveCb.bid     <= 'b0;
-    axiSlaveCb.bresp   <= 'b0;
-    axiSlaveCb.buser   <= 'b0;
+    axiSlaveCb.bid     <= 'b z;
+    axiSlaveCb.bresp   <= 'b z;
+    axiSlaveCb.buser   <= 'b z;
 
-    axiSlaveCb.rid     <= 'b0;
-    axiSlaveCb.rdata   <= 'b0;
-    axiSlaveCb.rresp   <= 'b0;
-    axiSlaveCb.ruser   <= 'b0;
-    axiSlaveCb.rlast   <= 'b0;
+    axiSlaveCb.rid     <= 'b z;
+    axiSlaveCb.rdata   <= 'b z;
+    axiSlaveCb.rresp   <= 'b z;
+    axiSlaveCb.ruser   <= 'b z;
+    axiSlaveCb.rlast   <= 'b z;
   endtask : default_values
 
 endinterface : axi4_slave_driver_bfm

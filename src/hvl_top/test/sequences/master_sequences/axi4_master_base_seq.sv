@@ -59,11 +59,12 @@
   // based on the request from driver task will drive the transactions
   task axi4_master_base_seq::body();
     super.body();
-
+    set_response_queue_depth(-1);
     if(writeOrRead == WRITE) begin
+
       totalCount = totalCount + MASTER_TRANSACTION_WRITE_ISSUE_COUNT;
       repeat(MASTER_TRANSACTION_WRITE_ISSUE_COUNT) begin
-
+        automatic int id;
         req = axi4_master_tx :: type_id :: create("req");
         start_item(req);
         `uvm_info(get_type_name(), $sformatf("Generating WRITE transaction | size=%s burst=%s type=%s",writeTranSize.name(), writeBurstType.name(), writeTransferType.name()), UVM_LOW)
@@ -72,23 +73,24 @@
           req.transfer_type == writeTransferType;
           req.awburst == writeBurstType;}) begin
             `uvm_fatal(get_type_name(), $sformatf("Randomization failed for WRITE axi4_master_tx (size=%s burst=%s type=%s)",writeTranSize.name(), writeBurstType.name(), writeTransferType.name()))
-        end
+         end
         finish_item(req);
-        //mark this write in-flight the moment it is issued
+        id = req.get_transaction_id; //if inside fork join id will assigned new transaction id as -1 
         inflight_base[req.get_transaction_id()] = req.awaddr;
         inflight_span[req.get_transaction_id()] = (req.awlen+1)*(2**req.awsize);
         fork
           begin
-            automatic int id = req.get_transaction_id();
+            
             RSP rsp;
-            `uvm_info(get_type_name(),$sformatf("Waiting for response of transaction id = %0d",id),UVM_MEDIUM)
+            `uvm_info(get_type_name(),$sformatf("Waiting for response of transaction id = %0d",id),UVM_NONE)
             get_response(rsp,id);
             //BRESP received -> this address is committed and safe to read back
             committed_base.push_back(inflight_base[id]);
             inflight_base.delete(id);
             inflight_span.delete(id);
             transCount++;
-            `uvm_info(get_type_name(),$sformatf("Response received, response count = %0d",transCount),UVM_MEDIUM)
+            `uvm_info(get_type_name(), $sformatf("resp_queue size = %0d for id=%d ", response_queue.size(),id),UVM_LOW)
+          `uvm_info(get_type_name(),$sformatf("Response received, response count = %0d",transCount),UVM_MEDIUM)
           end
         join_none;
       end 
@@ -96,6 +98,7 @@
     else begin
       totalCount= totalCount + MASTER_TRANSACTION_READ_ISSUE_COUNT;
       repeat(MASTER_TRANSACTION_READ_ISSUE_COUNT) begin
+        int id;
         req = axi4_master_tx :: type_id :: create("req");
         start_item(req);
         `uvm_info(get_type_name(), $sformatf("Generating READ transaction | size=%s burst=%s type=%s",writeTranSize.name(), writeBurstType.name(), writeTransferType.name()), UVM_LOW)
@@ -119,12 +122,13 @@
         end
 
         finish_item(req);
+        id = req.get_transaction_id();
         fork
           begin  
-            automatic int id = req.get_transaction_id();
             RSP rsp;
             get_response(rsp,id);
             transCount++;
+            `uvm_info(get_type_name(), $sformatf("resp_queue size = %0d", response_queue.size()), UVM_LOW)
           end 
         join_none;
       end 
