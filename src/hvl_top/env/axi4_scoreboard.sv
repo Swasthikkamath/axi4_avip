@@ -430,6 +430,12 @@
                 referenceFifo.get(readCompare);
               end 
               else begin 
+                if(t1.rresp== READ_SLVERR) begin //fifo underrun error generation 
+                  byte_data_cmp_verified_rresp_count++;
+                end
+                else begin 
+                  byte_data_cmp_failed_rresp_count++;
+                end 
                 readCompare ='0;
               end 
               if(t1.rdata[0][8*j +:8] !=readCompare) begin 
@@ -465,15 +471,25 @@
                 tempAddress++;
               end 
               else begin 
-                if(t1.rresp== READ_SLVERR) begin
-                  byte_data_cmp_verified_rresp_count++;
+                if( t1.rdata[0][8*j +:8] != 0)begin
+                  `uvm_error("READ CHECK FAIL",$sformatf("NON EXISTANT LOCATION THE BYTE DOESNT MATCH IN THE POSITION %d when reference byte is %d and actual one is %d",j,0,t1.rdata[0][8*j+7-:8]))
+                  byte_data_cmp_failed_rdata_count++;
+                  read_txn_failed = 1;
 
+                end
+                else begin
+                  byte_data_cmp_verified_rdata_count++;
+                  `uvm_info("READ CHECK PASS",$sformatf("NON EXISTANT THE BYTE MATCHES IN POSITION %0d and reference byte is %h",j,0),UVM_NONE);
+                end
+
+                if(t1.rresp== READ_OKAY) begin
+                  byte_data_cmp_verified_rresp_count++;
                 end
                 else begin
                   byte_data_cmp_failed_rresp_count++;
                 end 
                 nonExistantMemRead++;
-                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %0h which doesnt exist so read slaver os %0s",tempAddress,t1.rresp),UVM_NONE)
+                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %h which doesnt exist so read resp  is %d",tempAddress,t1.rresp),UVM_NONE)
                 tempAddress++;
               end
             end
@@ -498,14 +514,24 @@
                 tempAddress++;
               end
               else begin 
+                if( t1.rdata[0][8*j +:8] != 0)begin
+                  `uvm_error("READ CHECK FAIL",$sformatf("NON EXISTANT LOCATION THE BYTE DOESNT MATCH IN THE POSITION %0d when reference byte is %d and actual one is %d",j,0,t1.rdata[0][8*j+7-:8]))
+                  byte_data_cmp_failed_rdata_count++;
+                  read_txn_failed = 1;
+                end
+                else begin
+                  byte_data_cmp_verified_rdata_count++;
+                  `uvm_info("READ CHECK PASS",$sformatf("NON EXISTANT THE BYTE MATCHES IN POSITION %d and reference byte is %h",j,0),UVM_NONE);
+                end
+
                 nonExistantMemRead++;
-                if(t1.rresp == READ_SLVERR) begin
+                if(t1.rresp == READ_OKAY) begin
                   byte_data_cmp_verified_rresp_count++;
                 end
                 else begin 
                   byte_data_cmp_failed_rresp_count++;
                 end 
-                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %0h which doesnt exist so read slaver os %0s",tempAddress,t1.rresp),UVM_HIGH)
+                `uvm_info("NON EXISTANT READ",$sformatf("READING FROM LOCATION %h which doesnt exist so read resp  is %d",tempAddress,t1.rresp),UVM_HIGH)
                 tempAddress++;
               end 
               if(tempAddress == wrapEndAddress)

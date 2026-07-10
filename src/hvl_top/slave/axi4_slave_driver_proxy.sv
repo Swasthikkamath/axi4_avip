@@ -641,16 +641,18 @@
           unalignedAmount =0;
         for(int strb=0;strb<((2**(read_pkt.arsize))-unalignedAmount);strb++) begin
           k = addr % (DATA_WIDTH/8);
+    if(axi4_slave_mem_h.fifo_memory.size()==0) begin 
+             struct_read_packet.rresp[0] = READ_SLVERR;
+          end 
           axi4_slave_mem_h.fifo_read(struct_read_packet.rdata[0][8*k +: 8]);
           addr++;
         end 
 
-        if((read_pkt.araddr+((2**(read_pkt.arsize))))> axi4_slave_agent_cfg_h.max_address) begin
+        if((addr)> axi4_slave_agent_cfg_h.max_address) begin
           struct_read_packet.rresp[0] = READ_SLVERR;
         end
-        else 
-          struct_read_packet.rresp[0]=READ_OKAY;
-        if(j == read_pkt.arlen)
+        
+  if(j == read_pkt.arlen)
           struct_read_packet.rlast=1;
         axi4_slave_drv_bfm_h.axi4_read_data_phase(struct_read_packet);
       end
@@ -680,7 +682,8 @@
 
           end 
           else begin 
-            struct_read_packet.rresp[0] = READ_SLVERR;
+           // struct_read_packet.rresp[0] = READ_SLVERR; //no need send out
+     // error when reading from non written address
             `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",addr),UVM_HIGH)
             struct_read_packet.rdata[0][8*k +:8] = '0;
             addr++;
@@ -720,7 +723,7 @@
             else begin
               `uvm_info(get_type_name(),$sformatf("SLAVE WRAP READ THE DATA DOESNT EXIST READ FROM %0d",k_t),UVM_HIGH)
 
-              struct_read_packet.rresp[0] = READ_SLVERR;
+              //struct_read_packet.rresp[0] = READ_SLVERR;
               struct_read_packet.rdata[0][8*k +:8] = '0;
               k_t++;
             end 

@@ -153,12 +153,16 @@ simulate:
 
 regression:
 	#Run compilation
-	make compile
+	make compile MODE=$(MODE);
 	#Run simualtion - regression
 	python regression_handling.py $(testlist_name)
 	#	# Get the tests from regression list
 	#	Merge coverage
-	#make merge_cov_report
+	make merge_cov_report
+
+merge_cov_report:
+	imc -execcmd "merge cov_work/scope/* -out merged -initial_model union_all -overwrite; exit"
+	imc -load cov_work/scope/merged
 
 clean_all:
 	make clean_compile;
